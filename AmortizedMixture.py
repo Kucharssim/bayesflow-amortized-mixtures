@@ -2,6 +2,32 @@ import tensorflow as tf
 import numpy as np
 from bayesflow.amortizers import *
 from bayesflow.simulation import Prior, Simulator
+from bayesflow.helper_networks import MCDropout
+from bayesflow.losses import log_loss
+
+
+def merge_first_two_dims(tensor):
+    shape = tensor.shape.as_list()
+    shape[0] *= shape[1]
+    shape.pop(1)
+    return tf.reshape(tensor, shape)
+
+def split_first_two_dims(tensor, dim_0, dim_1):
+    shape = tensor.shape.as_list()
+    new_shape = [dim_0] + [dim_1] + shape[1:]
+    return tf.reshape(tensor, new_shape)
+
+def expand_tensor(tensor, dim_1):
+    shape = tensor.shape.as_list()
+    tensor = tf.expand_dims(tensor, axis=1)
+    
+    multiples = [1, dim_1]
+    rest = [1 for _ in shape[1:]]
+    tensor = tf.tile(tensor, multiples=multiples + rest)
+
+    return tensor
+
+
 
 def prior(prior_fun):
     def pr():
@@ -18,25 +44,118 @@ def simulator(simulator_fun):
     return Simulator(simulator_fun=sf)
 
 
+
 class AmortizedMixture(tf.keras.Model, AmortizedTarget):
     def __init__(
             self,
             inference_net,
-            summary_net=None,
-            loss_fun=None,
+            local_summary_net=None,
+            global_summary_net=None,
+            loss_fun=log_loss,
             **kwargs
     ):
         tf.keras.Model.__init__(self, **kwargs)
 
         self.inference_net = inference_net
-        self.summary_net = summary_net
-        self.loss = self._determine_loss(loss_fun)
-        self.num_states = inference_net.num_states
+        self.local_summary_net = local_summary_net
+        self.global_summary_net = global_summary_net
+        self.loss = loss_fun
+
+        self.is_conditional = global_summary_net is None
 
 
-    def call(self, input_dict, **kwargs):
+    def call(self, input_dict, return_summary=False, **kwargs):
+        observables = input_dict.get("observables")
+        if self.local_summary_net is not None:
+            observables = self.local_summary_net(observables)
+
+        if self.is_conditional:
+            conditions = input_dict.get("parameters")
+            assert conditions is not None
+        else:
+            conditions = self.global_summary_net(observables, **kwargs)
+
+        out = self.inference_net(observables, conditions)
+
+        if not return_summary:
+            return out
+        return out, conditions
+    
+    def posterior_probs(self, input_dict, **kwargs):
+        out = self(input_dict, return_summary=False, **kwargs)
+        return out
+
+    def compute_loss(self, input_dict, **kwargs):
+        preds = self.posterior_probs(input_dict, **kwargs)
+        loss = self.loss(input_dict.get("latents"), preds)
+        return tf.reduce_mean(loss)
+    
+    def sample(self, input_dict, n_samples, **kwargs):
+        probs = self.posterior_probs(input_dict, **kwargs)
+        return probs
+    
+    def log_prob(self):
         pass
+    
+class IndependentClassificator(tf.keras.Model):
+    def __init__(
+        self,
+        num_outputs,
+        dense_args=dict(units=64, activation="relu"),
+        num_dense=3,
+        dropout=True,
+        mc_dropout=False,
+        dropout_prob=0.05,
+        output_activation=tf.nn.softmax,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
 
+        # Sequential model with optional (MC) Dropout
+        self.net = tf.keras.Sequential()
+        for _ in range(num_dense):
+            self.net.add(tf.keras.layers.Dense(**dense_args))
+            if mc_dropout:
+                self.net.add(MCDropout(dropout_prob))
+            elif dropout:
+                self.net.add(tf.keras.layers.Dropout(dropout_prob))
+            else:
+                pass
+        self.output_layer = tf.keras.layers.Dense(num_outputs)
+        self.output_activation = output_activation
+        self.num_outputs = num_outputs
+
+    def call(self, observables, conditions, return_probs=True, **kwargs):
+        """
+        Parameters
+        ----------
+        observables : tf.Tensor of shape (batch_size, num_obs, ...)
+        conditions : tf.Tensor of shape (batch_size, ...)
+
+        Returns
+        -------
+        out: tf.Tensor of shape (batch_size, num_obs, num_outputs)
+        """
+        
+        batch_size, num_obs, _ = observables.shape
+        long_observables = merge_first_two_dims(observables)
+        long_conditions = merge_first_two_dims(expand_tensor(conditions, num_obs))
+        cond = tf.concat([long_observables, long_conditions], axis = -1)
+
+        rep = self.net(cond)
+        out = self.output_layer(rep, **kwargs)
+        if return_probs:
+            out = self.output_activation(out)
+        
+        out = split_first_two_dims(out, batch_size, num_obs)
+
+        return out
+
+class AmortizedMixturePosterior(tf.keras.Model, AmortizedTarget):
+    def __init__(self, amortizers, **kwargs):
+        tf.keras.Model.__init__(self, **kwargs)
+        self.amortizers = amortizers
+    
 
 
 class AmortizedPosteriorLikelihoodMixture(tf.keras.Model, AmortizedTarget):
