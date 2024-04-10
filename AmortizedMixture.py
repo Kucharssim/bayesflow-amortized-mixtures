@@ -27,77 +27,10 @@ def expand_tensor(tensor, dim_1):
 
     return tensor
 
-
-
-def prior(prior_fun):
-    def pr():
-        prior = prior_fun()
-        return prior
-    
-    return Prior(prior_fun=pr)
-
-def simulator(simulator_fun):
-    def sf(theta, *args, **kwargs):
-        sim = simulator_fun(theta, *args, **kwargs)
-        return sim
-
-    return Simulator(simulator_fun=sf)
-
-
-
-class AmortizedMixture(tf.keras.Model, AmortizedTarget):
-    def __init__(
-            self,
-            inference_net,
-            local_summary_net=None,
-            global_summary_net=None,
-            loss_fun=log_loss,
-            **kwargs
-    ):
-        tf.keras.Model.__init__(self, **kwargs)
-
-        self.inference_net = inference_net
-        self.local_summary_net = local_summary_net
-        self.global_summary_net = global_summary_net
-        self.loss = loss_fun
-
-        self.is_conditional = global_summary_net is None
-
-
-    def call(self, input_dict, return_summary=False, **kwargs):
-        observables = input_dict.get("observables")
-        if self.local_summary_net is not None:
-            observables = self.local_summary_net(observables)
-
-        if self.is_conditional:
-            conditions = input_dict.get("parameters")
-            assert conditions is not None
-        else:
-            conditions = self.global_summary_net(observables, **kwargs)
-
-        out = self.inference_net(observables, conditions)
-
-        if not return_summary:
-            return out
-        return out, conditions
-    
-    def posterior_probs(self, input_dict, **kwargs):
-        out = self(input_dict, return_summary=False, **kwargs)
-        return out
-
-    def compute_loss(self, input_dict, **kwargs):
-        preds = self.posterior_probs(input_dict, **kwargs)
-        loss = self.loss(input_dict.get("latents"), preds)
-        return tf.reduce_mean(loss)
-    
-    def sample(self, input_dict, n_samples, **kwargs):
-        probs = self.posterior_probs(input_dict, **kwargs)
-        return probs
-    
-    def log_prob(self):
-        pass
-    
 class IndependentClassificator(tf.keras.Model):
+    """
+    Outputs the distribution p(s | y, θ) = ∏ p(s_i | y_i, θ)
+    """
     def __init__(
         self,
         num_outputs,
@@ -151,10 +84,88 @@ class IndependentClassificator(tf.keras.Model):
 
         return out
 
-class AmortizedMixturePosterior(tf.keras.Model, AmortizedTarget):
-    def __init__(self, amortizers, **kwargs):
+class AmortizedMixture(tf.keras.Model, AmortizedTarget):
+    """
+    Infers p(s | y) = ∫ p(s, θ | y) dθ
+    """
+    def __init__(
+            self,
+            inference_net,
+            local_summary_net=None,
+            global_summary_net=None,
+            loss_fun=log_loss,
+            **kwargs
+    ):
         tf.keras.Model.__init__(self, **kwargs)
-        self.amortizers = amortizers
+
+        self.inference_net = inference_net
+        self.local_summary_net = local_summary_net
+        self.global_summary_net = global_summary_net
+        self.loss = loss_fun
+
+        self.is_conditional = global_summary_net is None
+
+
+    def call(self, input_dict, return_summary=False, **kwargs):
+        observables = input_dict.get("observables")
+        if self.local_summary_net is not None:
+            observables = self.local_summary_net(observables)
+
+        if self.is_conditional:
+            conditions = input_dict.get("parameters")
+            assert conditions is not None
+        else:
+            conditions = self.global_summary_net(observables, **kwargs)
+
+        out = self.inference_net(observables, conditions)
+
+        if not return_summary:
+            return out
+        return out, conditions
+    
+    def posterior_probs(self, input_dict, **kwargs):
+        out = self(input_dict, return_summary=False, **kwargs)
+        return out
+
+    def compute_loss(self, input_dict, **kwargs):
+        preds = self.posterior_probs(input_dict, **kwargs)
+        loss = self.loss(input_dict.get("latents"), preds)
+        return tf.reduce_mean(loss)
+    
+    def sample(self, input_dict, n_samples, **kwargs):
+        probs = self.posterior_probs(input_dict, **kwargs)
+        return probs
+    
+    def log_prob(self):
+        pass
+
+
+class AmortizedMixturePosterior(tf.keras.Model, AmortizedTarget):
+    """
+    Infers p(s, θ | y) = p(s | θ, y) x p(θ | y)
+    """
+    def __init__(self, amortized_mixture, amortized_posterior, **kwargs):
+        tf.keras.Model.__init__(self, **kwargs)
+        self.amortized_mixture   = amortized_mixture
+        self.amortized_posterior = amortized_posterior
+    
+    def call(self, input_dict, **kwargs):
+        mix_out = self.amortized_mixture(input_dict, **kwargs)
+        pos_out = self.amortized_mixture(input_dict, **kwargs)
+        return mix_out, pos_out
+    
+    def compute_loss(self, input_dict, **kwargs):
+        mix_loss = self.amortized_mixture(input_dict["mixture_inputs"], **kwargs)
+        pos_out = self.amortized_posterior(input_dict["posterior_inputs"], **kwargs)
+        return {"Mix.Loss": mix_loss, "Post.Loss": pos_out}
+    
+    def sample_parameters(self, input_dict, n_samples, to_numpy=True, **kwargs):
+        pass
+
+    def sample(self, input_dict, n_samples, to_numpy=True, **kwargs):
+        post_samples = self.sample_parameters(input_dict, n_samples=n_samples, to_numpy=to_numpy, **kwargs)
+        return post_samples
+
     
 
 
@@ -276,3 +287,20 @@ class DefaultJointMixtureConfigurator:
                 'conditions': con#np.array(con).astype(self.default_float_type)
             })
         return likelihood_input
+    
+
+
+
+def prior(prior_fun):
+    def pr():
+        prior = prior_fun()
+        return prior
+    
+    return Prior(prior_fun=pr)
+
+def simulator(simulator_fun):
+    def sf(theta, *args, **kwargs):
+        sim = simulator_fun(theta, *args, **kwargs)
+        return sim
+
+    return Simulator(simulator_fun=sf)
