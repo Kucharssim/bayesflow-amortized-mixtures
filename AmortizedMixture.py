@@ -6,18 +6,26 @@ from bayesflow.helper_networks import MCDropout
 from bayesflow.losses import log_loss
 
 
+def _ensure_tensor(tensor):
+    if not tf.is_tensor(tensor):
+        return tf.convert_to_tensor(tensor)
+    
+    return tensor
 def merge_first_two_dims(tensor):
+    tensor = _ensure_tensor(tensor)
     shape = tensor.shape.as_list()
     shape[0] *= shape[1]
     shape.pop(1)
     return tf.reshape(tensor, shape)
 
 def split_first_two_dims(tensor, dim_0, dim_1):
+    tensor = _ensure_tensor(tensor)
     shape = tensor.shape.as_list()
     new_shape = [dim_0] + [dim_1] + shape[1:]
     return tf.reshape(tensor, new_shape)
 
 def expand_tensor(tensor, dim_1):
+    tensor = _ensure_tensor(tensor)
     shape = tensor.shape.as_list()
     tensor = tf.expand_dims(tensor, axis=1)
     
@@ -142,32 +150,53 @@ class AmortizedMixture(tf.keras.Model, AmortizedTarget):
 
 class AmortizedMixturePosterior(tf.keras.Model, AmortizedTarget):
     """
-    Infers p(s, θ | y) = p(s | θ, y) x p(θ | y)
+    Infers p(θ, s | y) = p(s | θ, y) x p(θ | y)
     """
     def __init__(self, amortized_mixture, amortized_posterior, **kwargs):
         tf.keras.Model.__init__(self, **kwargs)
         self.amortized_mixture   = amortized_mixture
         self.amortized_posterior = amortized_posterior
-    
+
     def call(self, input_dict, **kwargs):
         mix_out = self.amortized_mixture(input_dict, **kwargs)
         pos_out = self.amortized_mixture(input_dict, **kwargs)
-        return mix_out, pos_out
+        return pos_out, mix_out
     
     def compute_loss(self, input_dict, **kwargs):
-        mix_loss = self.amortized_mixture(input_dict["mixture_inputs"], **kwargs)
-        pos_out = self.amortized_posterior(input_dict["posterior_inputs"], **kwargs)
+        mix_loss = self.amortized_mixture.compute_loss(input_dict["mixture_inputs"], **kwargs)
+        pos_out = self.amortized_posterior.compute_loss(input_dict["posterior_inputs"], **kwargs)
         return {"Mix.Loss": mix_loss, "Post.Loss": pos_out}
-    
-    def sample_parameters(self, input_dict, n_samples, to_numpy=True, **kwargs):
-        pass
 
     def sample(self, input_dict, n_samples, to_numpy=True, **kwargs):
-        post_samples = self.sample_parameters(input_dict, n_samples=n_samples, to_numpy=to_numpy, **kwargs)
-        return post_samples
+        post_samples = self.amortized_posterior.sample(input_dict['posterior_inputs'], n_samples=n_samples, to_numpy=False, **kwargs)
 
+
+        if len(post_samples.shape) == 2: # because posterior drops first dim if batches==1
+            post_samples = tf.expand_dims(post_samples, axis=0)
+
+        n_batches = post_samples.shape[0]
+        mixture_inputs = input_dict["mixture_inputs"]
+        mixture_inputs['parameters'] = merge_first_two_dims(post_samples)
+        mixture_inputs['observables'] = merge_first_two_dims(expand_tensor(mixture_inputs['observables'], n_samples))
+        posterior_probs = self.amortized_mixture.posterior_probs(mixture_inputs, **kwargs)
+        posterior_probs = split_first_two_dims(posterior_probs, n_batches, n_samples)
+        return post_samples, posterior_probs
     
+    def log_prob(self):
+        pass
 
+class AmortizedPosteriorMixture(tf.keras.Model, AmortizedTarget):
+    """
+    Infers p(θ, s | y) = p(θ | s, y) x p(s | y)
+    """
+    def __init__(self, amortized_mixture, amortized_posterior, **kwargs):
+        tf.keras.Model.__init__(self, **kwargs)
+        self.amortized_mixture   = amortized_mixture
+        self.amortized_posterior = amortized_posterior
+
+    def sample(self, input_dict, n_samples, to_numpy=True, **kwargs):
+        mix_samples = self.amortized_mixture.sample(input_dict['mixture_inputs'], n_samples=n_samples, **kwargs)
+        return input_dict['posterior_inputs']['summary_conditions']
 
 class AmortizedPosteriorLikelihoodMixture(tf.keras.Model, AmortizedTarget):
     def __init__(

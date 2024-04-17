@@ -1,4 +1,5 @@
 import numpy as np
+import tensorflow as tf
 
 def classification_entropy(p):
     log_p = np.log(p)
@@ -13,5 +14,6 @@ def classification_entropy(p):
     return ent
 
 def accuracy(p, latents):
-    out = p * latents
-    return out
+    cls = tf.one_hot(np.argmax(p, axis=-1), p.shape[-1])
+    acc = np.mean(latents == cls, axis=1)
+    return acc
