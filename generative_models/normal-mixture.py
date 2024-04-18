@@ -16,13 +16,14 @@ def simulator(theta, n):
     pi, mu = theta.values()
     z = np.random.choice(a=len(pi), size=n, replace=True, p=pi)
     mu = mu[z,:]
-    print(z)
-    print(mu)
     y = np.random.normal(loc=mu, size=mu.shape)
     return {
         "latents": z,
         "observables": y
     }
+
+def context():
+    return np.random(50, 1001)
 
 
 
