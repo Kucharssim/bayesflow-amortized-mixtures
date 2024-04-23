@@ -1,6 +1,7 @@
 data {
     int n_obs;
     int n_cls;
+    int n_rep;
     array[n_obs] real y;
     real prior_scale;
     vector[n_cls] alpha;

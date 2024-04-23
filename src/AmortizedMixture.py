@@ -5,36 +5,6 @@ from bayesflow.simulation import Prior, Simulator
 from bayesflow.helper_networks import MCDropout
 from bayesflow.losses import log_loss
 
-
-def _ensure_tensor(tensor):
-    if not tf.is_tensor(tensor):
-        return tf.convert_to_tensor(tensor)
-    
-    return tensor
-def merge_first_two_dims(tensor):
-    tensor = _ensure_tensor(tensor)
-    shape = tensor.shape.as_list()
-    shape[0] *= shape[1]
-    shape.pop(1)
-    return tf.reshape(tensor, shape)
-
-def split_first_two_dims(tensor, dim_0, dim_1):
-    tensor = _ensure_tensor(tensor)
-    shape = tensor.shape.as_list()
-    new_shape = [dim_0] + [dim_1] + shape[1:]
-    return tf.reshape(tensor, new_shape)
-
-def expand_tensor(tensor, dim_1):
-    tensor = _ensure_tensor(tensor)
-    shape = tensor.shape.as_list()
-    tensor = tf.expand_dims(tensor, axis=1)
-    
-    multiples = [1, dim_1]
-    rest = [1 for _ in shape[1:]]
-    tensor = tf.tile(tensor, multiples=multiples + rest)
-
-    return tensor
-
 class IndependentClassificator(tf.keras.Model):
     """
     Outputs the distribution p(s | y, θ) = ∏ p(s_i | y_i, θ)
@@ -53,16 +23,17 @@ class IndependentClassificator(tf.keras.Model):
         super().__init__(**kwargs)
 
         # Sequential model with optional (MC) Dropout
-        self.net = tf.keras.Sequential()
+        net = tf.keras.Sequential()
         for _ in range(num_dense):
-            self.net.add(tf.keras.layers.Dense(**dense_args))
+            net.add(tf.keras.layers.Dense(**dense_args))
             if mc_dropout:
-                self.net.add(MCDropout(dropout_prob))
+                net.add(MCDropout(dropout_prob))
             elif dropout:
-                self.net.add(tf.keras.layers.Dropout(dropout_prob))
+                net.add(tf.keras.layers.Dropout(dropout_prob))
             else:
                 pass
-        self.output_layer = tf.keras.layers.Dense(num_outputs)
+        net.add(tf.keras.layers.Dense(num_outputs))
+        self.net = tf.keras.layers.TimeDistributed(net)
         self.output_activation = output_activation
         self.num_outputs = num_outputs
 
@@ -77,20 +48,17 @@ class IndependentClassificator(tf.keras.Model):
         -------
         out: tf.Tensor of shape (batch_size, num_obs, num_outputs)
         """
-        
-        batch_size, num_obs, _ = observables.shape
-        long_observables = merge_first_two_dims(observables)
-        long_conditions = merge_first_two_dims(expand_tensor(conditions, num_obs))
-        cond = tf.concat([long_observables, long_conditions], axis = -1)
 
-        rep = self.net(cond)
-        out = self.output_layer(rep, **kwargs)
+        conditions = tf.expand_dims(conditions, 1)
+        conditions = tf.tile(conditions, [1, tf.shape(observables)[1], 1])
+
+        input = tf.concat([observables, conditions], axis=-1)
+
+        output = self.net(input)
         if return_probs:
-            out = self.output_activation(out)
-        
-        out = split_first_two_dims(out, batch_size, num_obs)
+            output = self.output_activation(output, axis=-1)
 
-        return out
+        return output
 
 class AmortizedMixture(tf.keras.Model, AmortizedTarget):
     """
@@ -115,7 +83,7 @@ class AmortizedMixture(tf.keras.Model, AmortizedTarget):
 
 
     def call(self, input_dict, return_summary=False, **kwargs):
-        observables = input_dict.get("observables")
+        observables = input_dict.get("summary_conditions")
         if self.local_summary_net is not None:
             observables = self.local_summary_net(observables)
 
@@ -124,6 +92,10 @@ class AmortizedMixture(tf.keras.Model, AmortizedTarget):
             assert conditions is not None
         else:
             conditions = self.global_summary_net(observables, **kwargs)
+
+        direct_conditions = input_dict.get("direct_conditions")
+        if direct_conditions is not None:
+            conditions = tf.concat([conditions, direct_conditions], axis=-1)
 
         out = self.inference_net(observables, conditions)
 
@@ -157,34 +129,38 @@ class AmortizedMixturePosterior(tf.keras.Model, AmortizedTarget):
         self.amortized_mixture   = amortized_mixture
         self.amortized_posterior = amortized_posterior
 
-    def call(self, input_dict, **kwargs):
+    def __call__(self, input_dict, **kwargs):
         mix_out = self.amortized_mixture(input_dict, **kwargs)
         pos_out = self.amortized_mixture(input_dict, **kwargs)
         return pos_out, mix_out
     
     def compute_loss(self, input_dict, **kwargs):
-        mix_loss = self.amortized_mixture.compute_loss(input_dict["mixture_inputs"], **kwargs)
-        pos_out = self.amortized_posterior.compute_loss(input_dict["posterior_inputs"], **kwargs)
+        mix_loss = self.amortized_mixture.compute_loss(input_dict, **kwargs)
+        pos_out = self.amortized_posterior.compute_loss(input_dict, **kwargs)
         return {"Mix.Loss": mix_loss, "Post.Loss": pos_out}
 
-    def sample(self, input_dict, n_samples, to_numpy=True, **kwargs):
-        post_samples = self.amortized_posterior.sample(input_dict['posterior_inputs'], n_samples=n_samples, to_numpy=False, **kwargs)
-
+    def sample(self, input_dict, n_samples, **kwargs):
+        post_samples = self.amortized_posterior.sample(input_dict, n_samples=n_samples, to_numpy=False, **kwargs)
 
         if len(post_samples.shape) == 2: # because posterior drops first dim if batches==1
             post_samples = tf.expand_dims(post_samples, axis=0)
 
-        n_batches = post_samples.shape[0]
-        mixture_inputs = input_dict["mixture_inputs"]
-        mixture_inputs['parameters'] = merge_first_two_dims(post_samples)
-        mixture_inputs['observables'] = merge_first_two_dims(expand_tensor(mixture_inputs['observables'], n_samples))
-        posterior_probs = self.amortized_mixture.posterior_probs(mixture_inputs, **kwargs)
-        posterior_probs = split_first_two_dims(posterior_probs, n_batches, n_samples)
-        return post_samples, posterior_probs
+        post_probs = []
+        for s in range(n_samples):
+            inp = input_dict
+            inp['parameters'] = post_samples[:,s,:]
+            post_probs.append(self.amortized_mixture.posterior_probs(inp))
+
+        post_probs = np.array(post_probs).swapaxes(0, 1)
+
+        post_samples = np.array(post_samples)
+        return post_samples, post_probs
     
     def log_prob(self):
         pass
 
+
+## The things below are outdated and or under question whether to implement
 class AmortizedPosteriorMixture(tf.keras.Model, AmortizedTarget):
     """
     Infers p(θ, s | y) = p(θ | s, y) x p(s | y)
@@ -333,3 +309,96 @@ def simulator(simulator_fun):
         return sim
 
     return Simulator(simulator_fun=sf)
+
+
+
+
+
+
+## Old stuff
+def _ensure_tensor(tensor):
+    if not tf.is_tensor(tensor):
+        return tf.convert_to_tensor(tensor)
+    
+    return tensor
+def merge_first_two_dims(tensor):
+    tensor = _ensure_tensor(tensor)
+    shape = tensor.shape.as_list()
+    shape[0] *= shape[1]
+    shape.pop(1)
+    return tf.reshape(tensor, shape)
+
+def split_first_two_dims(tensor, dim_0, dim_1):
+    tensor = _ensure_tensor(tensor)
+    shape = tensor.shape.as_list()
+    new_shape = [dim_0] + [dim_1] + shape[1:]
+    return tf.reshape(tensor, new_shape)
+
+def expand_tensor(tensor, dim_1):
+    tensor = _ensure_tensor(tensor)
+    shape = tensor.shape.as_list()
+    tensor = tf.expand_dims(tensor, axis=1)
+    
+    multiples = [1, dim_1]
+    rest = [1 for _ in shape[1:]]
+    tensor = tf.tile(tensor, multiples=multiples + rest)
+
+    return tensor
+
+class OldIndependentClassificator(tf.keras.Model):
+    """
+    Outputs the distribution p(s | y, θ) = ∏ p(s_i | y_i, θ)
+    """
+    def __init__(
+        self,
+        num_outputs,
+        dense_args=dict(units=64, activation="relu"),
+        num_dense=3,
+        dropout=True,
+        mc_dropout=False,
+        dropout_prob=0.05,
+        output_activation=tf.nn.softmax,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+
+        # Sequential model with optional (MC) Dropout
+        net = tf.keras.Sequential()
+        for _ in range(num_dense):
+            net.add(tf.keras.layers.Dense(**dense_args))
+            if mc_dropout:
+                net.add(MCDropout(dropout_prob))
+            elif dropout:
+                net.add(tf.keras.layers.Dropout(dropout_prob))
+            else:
+                pass
+        self.net = net
+        self.output_layer = tf.keras.layers.Dense(num_outputs)
+        self.output_activation = output_activation
+        self.num_outputs = num_outputs
+
+    def call(self, observables, conditions, return_probs=True, **kwargs):
+        """
+        Parameters
+        ----------
+        observables : tf.Tensor of shape (batch_size, num_obs, ...)
+        conditions : tf.Tensor of shape (batch_size, ...)
+
+        Returns
+        -------
+        out: tf.Tensor of shape (batch_size, num_obs, num_outputs)
+        """
+        
+        batch_size, num_obs, _ = observables.shape
+        long_observables = merge_first_two_dims(observables)
+        long_conditions = merge_first_two_dims(expand_tensor(conditions, num_obs))
+        cond = tf.concat([long_observables, long_conditions], axis = -1)
+
+        rep = self.net(cond)
+        out = self.output_layer(rep, **kwargs)
+        if return_probs:
+            out = self.output_activation(out)
+        
+        out = split_first_two_dims(out, batch_size, num_obs)
+
+        return out

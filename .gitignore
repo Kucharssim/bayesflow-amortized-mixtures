@@ -1,2 +1,6 @@
 .venv
 __pycache__
+sandbox.ipynb
+*checkpoints*
+case-studies/normal-mixture/mixture/
+*.DS_Store
