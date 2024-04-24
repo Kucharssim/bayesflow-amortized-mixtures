@@ -14,8 +14,8 @@ class NormalMixture:
         self.alpha = alpha
         self.rng = np.random.default_rng(seed=seed)
 
-    def __call__(self, batch_size):
-        out = self._sim_batch(batch_size=batch_size)
+    def __call__(self, batch_size, context=None, parameters=None):
+        out = self._sim_batch(batch_size=batch_size, context=context, parameters=parameters)
         out = self._configure(out)
         return out
     
@@ -45,8 +45,10 @@ class NormalMixture:
 
         return { "latents": latents, "observables": y}
     
-    def _sim_once(self, context):
-        parameters = self._prior()
+    def _sim_once(self, context, parameters=None):
+        if parameters is None:
+            parameters = self._prior()
+            
         sims = self._simulator(parameters=parameters, context=context)
 
         return {
@@ -56,9 +58,10 @@ class NormalMixture:
             "observables": sims['observables']
         }
     
-    def _sim_batch(self, batch_size):
-        context = self._context()
-        output = [self._sim_once(context) for _ in range(batch_size)]
+    def _sim_batch(self, batch_size, context, parameters):
+        if context is None:
+            context = self._context()
+        output = [self._sim_once(context, parameters) for _ in range(batch_size)]
         output = list2dict(output)
         return output
     
