@@ -1,10 +1,16 @@
 data {
-    int n_obs;
-    int n_cls;
-    int n_rep;
-    array[n_obs] real y;
-    real prior_scale;
-    vector[n_cls] alpha;
+    int n_cls; // number of mixture components
+    int n_obs; // number of observations to classify
+    int n_rep; // number of 'replications' for each observation
+    array[n_obs,n_rep] real y; // observations
+    real separation; // prior separation between components
+    vector[n_cls] alpha; // prior on mixture proportions
+}
+transformed data {
+    vector[n_cls] hyper_mu;
+    for (k in 1:n_cls) {
+        hyper_mu[k] = separation * (k - n_cls / 2.0 - 0.5);
+    }
 }
 parameters {
     simplex[n_cls] p;
@@ -17,7 +23,9 @@ transformed parameters {
     for (i in 1:n_obs) {
         log_probs[i] = log(p);
         for (k in 1:n_cls) {
-            log_probs[i,k] += normal_lpdf(y[i] | mu[k], 1.0);
+            for (j in 1:n_rep) {
+                log_probs[i,k] += normal_lpdf(y[i,j] | mu[k], 1.0);
+            }
         }
         cumulative_log_probs += log_sum_exp(log_probs[i]);
     }
@@ -25,7 +33,7 @@ transformed parameters {
 model {
     // priors
     target += dirichlet_lpdf(p | alpha);
-    target += normal_lpdf(mu | 0.0, prior_scale);
+    target += normal_lpdf(mu | hyper_mu, 1.0);
 
     // likelihood
     target += cumulative_log_probs;

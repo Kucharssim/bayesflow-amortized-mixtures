@@ -1,18 +1,23 @@
 import numpy as np
+from ..Constraints import ordered, simplex
 
 
 class NormalMixture:
-    def __init__(self, n_obs=[50,250], n_cls=2, n_rep=[1,10], prior_scale=1.0, ordered=True, alpha=None, seed=None):
+    def __init__(self, n_cls=2, n_obs=None, n_rep=None, separation=1.0, ordered=True, alpha=None, seed=None):
         if alpha is None:
-            alpha = [1 for _ in range(n_cls)]
+            alpha = [2 for _ in range(n_cls)]
         
-        self.n_obs = n_obs
         self.n_cls = n_cls
+        self.n_obs = n_obs
         self.n_rep = n_rep
-        self.prior_scale = prior_scale
+        self.separation = separation
         self.ordered = ordered
         self.alpha = alpha
         self.rng = np.random.default_rng(seed=seed)
+
+    @property
+    def n_par(self):
+        return self.n_cls*2 - 1
 
     def __call__(self, batch_size, context=None, parameters=None):
         out = self._sim_batch(batch_size=batch_size, context=context, parameters=parameters)
@@ -27,9 +32,12 @@ class NormalMixture:
     
     def _prior(self):
         p = self.rng.dirichlet(alpha=self.alpha)
-        mu = self.rng.normal(scale=self.prior_scale, size=self.n_cls)
+        hyper_mu = [self.separation * (n - (self.n_cls-1) / 2.0) for n in range(self.n_cls)]
+        mu = self.rng.normal(loc=hyper_mu, scale=1, size=self.n_cls)
         if self.ordered:
-            mu = np.sort(mu)
+            while any(np.sort(mu) != mu):
+                mu = self.rng.normal(loc=hyper_mu, scale=1, size=self.n_cls)
+            #mu = np.sort(mu)
 
         return { "p": p, "mu": mu}
     
@@ -70,6 +78,12 @@ class NormalMixture:
         Concatenate all parameters
         """
         parameters = list2dict(parameters)
+        parameters['p'] = simplex.unconstrain(parameters['p'], axis=1)
+
+        if self.ordered:
+            parameters['mu'] = ordered.unconstrain(parameters['mu'], axis=1)
+        else:
+            parameters['mu'] = parameters['mu']
         return concat(parameters)
     
     def _configure_latents(self, latents):
@@ -113,6 +127,20 @@ class NormalMixture:
             "direct_conditions": self._configure_context([context]).astype(np.float32),
             "summary_conditions": self._configure_observables(observables[np.newaxis,...]).astype(np.float32)
         }
+
+    def extract_pars(self, parameters, axis=1, constrained=True):
+        p  = np.take(parameters, indices=[i for i in range(self.n_cls-1)], axis=axis)
+        mu = np.take(parameters, indices=[i+self.n_cls-1 for i in range(self.n_cls)], axis=axis)
+
+        if constrained:
+            p = simplex.constrain(p, axis=axis)
+            mu = ordered.constrain(mu, axis=axis)
+        
+        return {
+            "p": p,
+            "mu": mu
+        }
+
 
 
 
