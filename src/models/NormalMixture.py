@@ -140,9 +140,25 @@ class NormalMixture:
             "p": p,
             "mu": mu
         }
+    
+    def construct_fixed_dataset(self, n_cls=None, n_obs=None, n_rep=None, means=None, props=None, testpoint=0.0):
+        means=np.array(means)
+        props=np.array(props)
+        cprop=np.cumsum(props)
+        group=np.array([np.sum(i/n_obs > cprop) for i in range(n_obs)])
 
+        y = self.rng.normal(np.zeros((n_obs, n_rep)), scale=1)
 
+        for k in range(n_cls):
+            yk = y[group==k,...]
+            yk = yk / np.std(yk, ddof=1) - np.mean(yk)
+            yk = yk + means[k]
+            y[group==k,...] = yk
 
+        tp = self.rng.normal(loc=0, scale=1, size=(1, n_rep))
+        tp = testpoint + tp / np.std(tp, ddof=1) - np.mean(tp)
+        
+        return np.concatenate([tp, y], axis=0)
 
 def at_least_ndim(x, ndim):
     while x.ndim < ndim:
@@ -154,3 +170,4 @@ def list2dict(x):
 
 def concat(x):
     return np.concatenate(list(x.values()), axis=1)
+
