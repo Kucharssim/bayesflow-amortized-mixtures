@@ -15,6 +15,9 @@ class NormalMixture:
         self.alpha = alpha
         self.rng = np.random.default_rng(seed=seed)
 
+        self._prior_means = None
+        self._prior_sds = None
+
     @property
     def n_par(self):
         return self.n_cls*2 - 1
@@ -73,18 +76,29 @@ class NormalMixture:
         output = list2dict(output)
         return output
     
-    def _configure_parameters(self, parameters):
+    def _concatenate_parameters(self, parameters):
         """
         Concatenate all parameters
         """
         parameters = list2dict(parameters)
         parameters['p'] = simplex.unconstrain(parameters['p'], axis=1)
 
+        parameters['mu'] = self._configure_mu(parameters['mu'])
+
+        parameters = concat(parameters)
+        return parameters
+    
+    def _configure_parameters(self, parameters):
+        parameters = self._concatenate_parameters(parameters)
+        parameters = self._standardize_parameters(parameters)
+
+        return parameters
+    
+    def _configure_mu(self, mu):
         if self.ordered:
-            parameters['mu'] = ordered.unconstrain(parameters['mu'], axis=1)
-        else:
-            parameters['mu'] = parameters['mu']
-        return concat(parameters)
+            mu = ordered.unconstrain(mu, axis=1)
+        
+        return mu
     
     def _configure_latents(self, latents):
         """
@@ -129,6 +143,7 @@ class NormalMixture:
         }
 
     def extract_pars(self, parameters, axis=1, constrained=True):
+        parameters = self._unstandardize_parameters(parameters)
         p  = np.take(parameters, indices=[i for i in range(self.n_cls-1)], axis=axis)
         mu = np.take(parameters, indices=[i+self.n_cls-1 for i in range(self.n_cls)], axis=axis)
 
@@ -157,8 +172,48 @@ class NormalMixture:
 
         tp = self.rng.normal(loc=0, scale=1, size=(1, n_rep))
         tp = testpoint + tp / np.std(tp, ddof=1) - np.mean(tp)
-        
+
         return np.concatenate([tp, y], axis=0)
+    
+    @property
+    def prior_means(self):
+        if self._prior_means is None:
+            pars = [self._prior() for _ in range(10000)]
+            pars = self._concatenate_parameters(pars)
+            self._prior_means = np.mean(pars, axis=0)
+        
+        return self._prior_means
+
+    @prior_means.setter
+    def prior_means(self, x):
+        x = np.array(x)
+
+        assert x.shape == (self.n_par,)
+
+        self._prior_means = x
+    
+    @property
+    def prior_sds(self):
+        if self._prior_sds is None:
+            pars = [self._prior() for _ in range(10000)]
+            pars = self._concatenate_parameters(pars)
+            self._prior_sds = np.std(pars, ddof=1, axis=0)
+        
+        return self._prior_sds
+    
+    @prior_sds.setter
+    def prior_sds(self, x):
+        x = np.array(x)
+
+        assert x.shape == (self.n_par,)
+
+        self._prior_sds = x
+
+    def _standardize_parameters(self, parameters):
+        return (parameters - self.prior_means) / self.prior_sds
+    
+    def _unstandardize_parameters(self, parameters):
+        return parameters * self.prior_sds + self.prior_means
 
 def at_least_ndim(x, ndim):
     while x.ndim < ndim:
