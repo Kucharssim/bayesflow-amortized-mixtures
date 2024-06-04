@@ -5,6 +5,68 @@ from bayesflow.simulation import Prior, Simulator
 from bayesflow.helper_networks import MCDropout
 from bayesflow.losses import log_loss
 
+
+class IndependentClassificator2(tf.keras.Model):
+    """
+    Outputs the distribution p(s | y, θ) = ∏ p(s_i | y_i, θ)
+    """
+    def __init__(
+        self,
+        num_outputs,
+        dense_args=dict(units=64, activation="relu"),
+        num_dense=3,
+        dropout=True,
+        mc_dropout=False,
+        dropout_prob=0.05,
+        output_activation=tf.nn.softmax,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+
+        # Sequential model with optional (MC) Dropout
+        net = tf.keras.Sequential()
+        for _ in range(num_dense):
+            net.add(tf.keras.layers.Dense(**dense_args))
+            if mc_dropout:
+                net.add(MCDropout(dropout_prob))
+            elif dropout:
+                net.add(tf.keras.layers.Dropout(dropout_prob))
+            else:
+                pass
+        net.add(tf.keras.layers.Dense(num_outputs))
+        self.net = tf.keras.layers.TimeDistributed(
+            tf.keras.layers.TimeDistributed(net)
+        )
+        self.output_activation = output_activation
+        self.num_outputs = num_outputs
+
+    def call(self, observables, conditions, return_probs=True, **kwargs):
+        """
+        Parameters
+        ----------
+        observables : tf.Tensor of shape (batch_size, n_obs, ...)
+        conditions : tf.Tensor of shape (batch_size, n_samples, ...)
+
+        Returns
+        -------
+        out: tf.Tensor of shape (batch_size, n_samples, n_obs, num_outputs)
+        """
+
+
+        observables = tf.expand_dims(observables, 1)
+        observables = tf.repeat(observables, repeats=tf.shape(conditions)[1], axis=1)
+
+        conditions = tf.expand_dims(conditions, 2)
+        conditions = tf.repeat(conditions, repeats=tf.shape(observables)[2], axis=2)
+
+        input = tf.concat([observables, conditions], axis=-1)
+
+        output = self.net(input)
+        if return_probs:
+            output = self.output_activation(output, axis=-1)
+
+        return output
+
 class IndependentClassificator(tf.keras.Model):
     """
     Outputs the distribution p(s | y, θ) = ∏ p(s_i | y_i, θ)
@@ -112,8 +174,22 @@ class AmortizedMixture(tf.keras.Model, AmortizedTarget):
         loss = self.loss(input_dict.get("latents"), preds)
         return tf.reduce_mean(loss)
     
-    def sample(self, input_dict, n_samples, **kwargs):
-        probs = self.posterior_probs(input_dict, **kwargs)
+    def sample(self, input_dict, samples, **kwargs):
+        observables = input_dict.get("summary_conditions")
+        if self.local_summary_net is not None:
+            observables = self.local_summary_net(observables)
+
+        direct_conditions = input_dict.get("direct_conditions")
+        
+        n_samples = samples.shape[1]
+
+        probs = []
+        for s in range(n_samples):
+            conditions = samples[:,s,...]
+            if direct_conditions is not None:
+                conditions = tf.concat([conditions, direct_conditions], axis=-1)
+            probs.append(self.inference_net(observables, conditions))
+        probs = np.array(probs).swapaxes(0, 1)
         return probs
     
     def log_prob(self):
@@ -145,13 +221,15 @@ class AmortizedMixturePosterior(tf.keras.Model, AmortizedTarget):
         if len(post_samples.shape) == 2: # because posterior drops first dim if batches==1
             post_samples = tf.expand_dims(post_samples, axis=0)
 
-        post_probs = []
-        for s in range(n_samples):
-            inp = input_dict
-            inp['parameters'] = post_samples[:,s,:]
-            post_probs.append(self.amortized_mixture.posterior_probs(inp))
+        # post_probs = []
+        # for s in range(n_samples):
+        #     inp = input_dict
+        #     inp['parameters'] = post_samples[:,s,:]
+        #     post_probs.append(self.amortized_mixture.posterior_probs(inp))
 
-        post_probs = np.array(post_probs).swapaxes(0, 1)
+        # post_probs = np.array(post_probs).swapaxes(0, 1)
+
+        post_probs = self.amortized_mixture.sample(input_dict, post_samples)
 
         post_samples = np.array(post_samples)
         return post_samples, post_probs
