@@ -76,6 +76,12 @@ class NormalMixture:
         output = list2dict(output)
         return output
     
+    def _configure_parameters(self, parameters):
+        parameters = self._concatenate_parameters(parameters)
+        parameters = self._standardize_parameters(parameters)
+
+        return parameters
+    
     def _concatenate_parameters(self, parameters):
         """
         Concatenate all parameters
@@ -86,12 +92,6 @@ class NormalMixture:
         parameters['mu'] = self._configure_mu(parameters['mu'])
 
         parameters = concat(parameters)
-        return parameters
-    
-    def _configure_parameters(self, parameters):
-        parameters = self._concatenate_parameters(parameters)
-        parameters = self._standardize_parameters(parameters)
-
         return parameters
     
     def _configure_mu(self, mu):
