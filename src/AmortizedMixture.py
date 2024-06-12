@@ -1,10 +1,93 @@
 import tensorflow as tf
+from tensorflow.keras.layers import LSTM, Bidirectional, Dense, TimeDistributed
+from tensorflow.keras.models import Sequential
+
 import numpy as np
 from bayesflow.amortizers import *
 from bayesflow.simulation import Prior, Simulator
 from bayesflow.helper_networks import MCDropout
 from bayesflow.losses import log_loss
+from bayesflow.default_settings import DEFAULT_SETTING_MULTI_CONV
+from bayesflow.helper_networks import MultiConv1D
 
+
+class DependentClassificator(tf.keras.Model):
+    def __init__(
+        self, num_outputs, num_conv_layers=2, lstm_units=128, bidirectional=False, conv_settings=None, output_activation=tf.nn.softmax, **kwargs
+    ):
+        """See bayesflow.summary_networks.SequenceNetwork
+        But returns the output per each input
+
+        Parameters
+        ----------
+        num_outputs     : int
+            The number of outputs.
+        num_conv_layers : int, optional, default: 2
+            The number of convolutional layers to use.
+        lstm_units      : int, optional, default: 128
+            The number of hidden LSTM units.
+        conv_settings   : dict or None, optional, default: None
+            The arguments passed to the `MultiConv1D` internal networks. If `None`,
+            defaults will be used from `default_settings`. If a dictionary is provided,
+            it should contain the following keys:
+            - layer_args      (dict) : arguments for `tf.keras.layers.Conv1D` without kernel_size
+            - min_kernel_size (int)  : the minimum kernel size (>= 1)
+            - max_kernel_size (int)  : the maximum kernel size
+        bidirectional   : bool, optional, default: False
+            Indicates whether the involved LSTM network is bidirectional (forward and backward in time)
+            or unidirectional (forward in time). Defaults to False, but may increase performance.
+        **kwargs        : dict
+            Optional keyword arguments passed to the __init__() method of tf.keras.Model
+        """
+
+        super().__init__(**kwargs)
+
+        # Take care of None conv_settings
+        if conv_settings is None:
+            conv_settings = DEFAULT_SETTING_MULTI_CONV
+
+        self.net = Sequential([MultiConv1D(conv_settings) for _ in range(num_conv_layers)])
+
+        lstm = LSTM(lstm_units, return_sequences=True)
+        self.lstm = Bidirectional(lstm) if bidirectional else lstm
+        self.out_layer = TimeDistributed(
+            Dense(num_outputs)
+        )
+
+        self.output_activation = output_activation
+        self.num_outputs = num_outputs
+
+    def call(self, observables, conditions, return_probs=True, **kwargs):
+        """Performs a forward pass through the network by first passing `x` through the sequence of
+        multi-convolutional layers and then applying the LSTM network.
+
+        Parameters
+        ----------
+        x : tf.Tensor
+            Input of shape (batch_size, n_time_steps, n_time_series)
+
+        Returns
+        -------
+        out : tf.Tensor
+            Output of shape (batch_size, summary_dim)
+        """
+
+        # out = self.net(x, **kwargs)
+        # out = self.lstm(out, **kwargs)
+        # out = self.out_layer(out, **kwargs)
+
+        conditions = tf.expand_dims(conditions, 1)
+        conditions = tf.tile(conditions, [1, tf.shape(observables)[1], 1])
+
+        input = tf.concat([observables, conditions], axis=-1)
+
+        output = self.net(input, **kwargs)
+        output = self.lstm(output, **kwargs)
+        output = self.out_layer(output, **kwargs)
+        if return_probs:
+            output = self.output_activation(output, axis=-1)
+
+        return output
 
 class IndependentClassificator2(tf.keras.Model):
     """

@@ -62,7 +62,7 @@ class NormalHmm(NormalMixture):
 
         return {"latents": latents, "observables": y}
     
-    def _configure_parameters(self, parameters):
+    def _concatenate_parameters(self, parameters):
         parameters = list2dict(parameters)
 
         p = simplex.unconstrain(parameters['p'], axis=-1)
@@ -73,3 +73,10 @@ class NormalHmm(NormalMixture):
         parameters['mu'] = self._configure_mu(parameters['mu'])
 
         return concat(parameters)
+        
+    
+    def _configure_observables(self, latents):
+        """
+        Ensure that the observables are atleast 3D
+        """
+        return at_least_ndim(latents, ndim=3)
