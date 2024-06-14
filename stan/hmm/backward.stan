@@ -1,6 +1,6 @@
   // Backward algorithm: log(beta[t, k]) = log p(state_t = k | x_{t:T})
-  vector[] backward(int K, int T, vector log_initial, matrix log_transition, vector[] emission_log_likelihoods) {
-    vector[K] log_beta[T];
+  array[] vector backward(int K, int T, vector log_initial, matrix log_transition, array[] vector emission_log_likelihoods) {
+    array[T] vector[K] log_beta;
 
     log_beta[T] = rep_vector(1, K);
 

@@ -1,30 +1,29 @@
 functions {
 #include hmm/forward.stan
 #include hmm/backward.stan
-#include hmm/forwardbackward.stan
 }
 data {
     int n_cls; // number of hmm components
     int n_obs; // number of observations to classify
     array[n_obs] real y; // observations
     real separation; // prior separation between components
-    vector[n_cls,n_cls] alpha; // prior on transition probability matrix
+    array[n_cls] vector[n_cls] alpha; // prior on transition probability matrix
 }
 transformed data {
     vector[n_cls] hyper_mu;
     for (k in 1:n_cls) {
         hyper_mu[k] = separation * (k - n_cls / 2.0 - 0.5);
     }
-    simplex[n_cls] log_init_prob = rep_vector(-log(n_cls), n_cls)
+    vector[n_cls] log_init_prob = rep_vector(-log(n_cls), n_cls);
 }
 parameters {
     ordered[n_cls] mu;
-    simplex[n_cls] transition_matrix[n_cls];
+    array[n_cls] simplex[n_cls] transition_matrix;
 }
 transformed parameters {
     matrix[n_cls, n_cls] log_transition_matrix;
-    vector[n_cls] emission_log_likelihoods[n_obs];
-    vector[n_sts] log_alpha[n_obs]; // forward variable
+    array[n_obs] vector[n_cls] emission_log_likelihoods;
+    array[n_obs] vector[n_cls] log_alpha; // forward variable
 
     for (state in 1:n_cls) {
         log_transition_matrix[state,] = to_row_vector(log(transition_matrix[state]));
@@ -47,9 +46,9 @@ model {
     }
 }
 generated quantities {
-    vector[n_cls] log_beta[n_obs]; //backward variable
-    simplex[n_cls] smoothing[n_obs]; // p(state_t | y_{1:T})
-    simplex[n_cls] filtering[n_obs]; // p(state_t | y_{1:t})
+    array[n_obs] vector[n_cls] log_beta; //backward variable
+    array[n_obs] simplex[n_cls] smoothing; // p(state_t | y_{1:T})
+    array[n_obs] simplex[n_cls] filtering; // p(state_t | y_{1:t})
 
     log_beta = backward(n_cls, n_obs, log_init_prob, log_transition_matrix, emission_log_likelihoods);
 
