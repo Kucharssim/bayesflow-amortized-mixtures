@@ -80,3 +80,17 @@ class NormalHmm(NormalMixture):
         Ensure that the observables are atleast 3D
         """
         return at_least_ndim(latents, ndim=3)
+    
+    def extract_pars(self, parameters, constrained=True):
+        parameters = self._unstandardize_parameters(parameters)
+
+        len_p = self.n_cls * (self.n_cls - 1)
+        p  = np.take(parameters, indices=[i for i in range(len_p)], axis=-1)
+        p  = np.reshape(p, p.shape[:-1] + (self.n_cls, self.n_cls-1)) 
+        mu = np.take(parameters, indices=[i+len_p for i in range(self.n_cls)], axis=-1)
+
+        if constrained:
+            p  = simplex.constrain(p,  axis=-1)
+            mu = ordered.constrain(mu, axis=-1)
+        return {"p": p, "mu": mu}
+        
