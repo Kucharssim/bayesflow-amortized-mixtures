@@ -3,10 +3,9 @@ from ..Constraints import ordered, simplex
 from .NormalMixture import *
 
 class NormalHmm(NormalMixture):
-    def __init__(self, n_cls=2, n_obs=None, separation=1.0, ordered=True, alpha=None, init=None, seed=None):
-        if alpha is None:
-            alpha = [2 for _ in range(n_cls)]
-            alpha = np.array([alpha for _ in range(n_cls)])
+    def __init__(self, n_cls=2, n_obs=None, separation=1.0, ordered=True, alpha=2, init=None, seed=None):
+        alpha = [alpha for _ in range(n_cls)]
+        alpha = np.array([alpha for _ in range(n_cls)])
 
         if init is None:
             init = np.array([1.0/n_cls for _ in range(n_cls)])
