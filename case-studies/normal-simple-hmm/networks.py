@@ -1,6 +1,9 @@
 import tensorflow as tf
 from tensorflow.keras.layers import LSTM, Bidirectional, Dense, TimeDistributed
+from tensorflow.keras.models import Sequential
 from bayesflow.amortizers import AmortizedTarget
+from bayesflow.helper_networks import MultiConv1D
+from bayesflow.default_settings import DEFAULT_SETTING_MULTI_CONV
 from bayesflow.losses import log_loss
 from numpy import expand_dims, zeros, array
 
@@ -11,7 +14,11 @@ class Smoothing(tf.keras.Model):
         super().__init__()
 
         self.n_classes = n_classes
-        self.lstm = Bidirectional(LSTM(n_classes*4, return_sequences=True))
+        
+        self.convolution = Sequential(
+            [MultiConv1D(DEFAULT_SETTING_MULTI_CONV) for _ in range(8)]
+            )
+        self.lstm = Bidirectional(LSTM(128, return_sequences=True))
         self.dense = TimeDistributed(Dense(n_classes))
 
     def call(self, observables, conditions):
@@ -21,11 +28,36 @@ class Smoothing(tf.keras.Model):
 
         input = tf.concat([observables, conditions], axis=-1)
 
-        output = self.lstm(input)
+        output = self.convolution(input)
+        output = self.lstm(output)
         output = self.dense(output)
 
         return tf.nn.softmax(output, axis=-1)
     
+class Filtering(tf.keras.Model):
+    def __init__(self, n_classes):
+        super().__init__()
+
+        self.n_classes = n_classes
+        
+        self.convolution = Sequential(
+            [MultiConv1D(DEFAULT_SETTING_MULTI_CONV) for _ in range(8)]
+            )
+        self.lstm = LSTM(128, return_sequences=True)
+        self.dense = TimeDistributed(Dense(n_classes))
+
+    def call(self, observables, conditions):
+
+        conditions = tf.expand_dims(conditions, 1)
+        conditions = tf.tile(conditions, [1, tf.shape(observables)[1], 1])
+
+        input = tf.concat([observables, conditions], axis=-1)
+
+        output = self.convolution(input)
+        output = self.lstm(output)
+        output = self.dense(output)
+
+        return tf.nn.softmax(output, axis=-1)
 
 class MixtureAmortizer(tf.keras.Model, AmortizedTarget):
     def __init__(self, inference_net):
