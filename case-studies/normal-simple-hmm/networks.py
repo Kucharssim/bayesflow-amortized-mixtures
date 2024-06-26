@@ -8,9 +8,8 @@ from bayesflow.losses import log_loss
 from numpy import expand_dims, zeros, array
 
 
-
-class Smoothing(tf.keras.Model):
-    def __init__(self, n_classes):
+class DependentMixture(tf.keras.Model):
+    def __init__(self, n_classes, bidirectional):
         super().__init__()
 
         self.n_classes = n_classes
@@ -18,7 +17,10 @@ class Smoothing(tf.keras.Model):
         self.convolution = Sequential(
             [MultiConv1D(DEFAULT_SETTING_MULTI_CONV) for _ in range(8)]
             )
-        self.lstm = Bidirectional(LSTM(128, return_sequences=True))
+        
+        lstm = LSTM(128, return_sequences=True)
+        self.lstm = Bidirectional(lstm) if bidirectional else lstm
+
         self.dense = TimeDistributed(Dense(n_classes))
 
     def call(self, observables, conditions):
@@ -34,30 +36,13 @@ class Smoothing(tf.keras.Model):
 
         return tf.nn.softmax(output, axis=-1)
     
-class Filtering(tf.keras.Model):
+class Smoothing(DependentMixture):
     def __init__(self, n_classes):
-        super().__init__()
+        super().__init__(n_classes, bidirectional=True)
 
-        self.n_classes = n_classes
-        
-        self.convolution = Sequential(
-            [MultiConv1D(DEFAULT_SETTING_MULTI_CONV) for _ in range(8)]
-            )
-        self.lstm = LSTM(128, return_sequences=True)
-        self.dense = TimeDistributed(Dense(n_classes))
-
-    def call(self, observables, conditions):
-
-        conditions = tf.expand_dims(conditions, 1)
-        conditions = tf.tile(conditions, [1, tf.shape(observables)[1], 1])
-
-        input = tf.concat([observables, conditions], axis=-1)
-
-        output = self.convolution(input)
-        output = self.lstm(output)
-        output = self.dense(output)
-
-        return tf.nn.softmax(output, axis=-1)
+class Filtering(DependentMixture):
+    def __init__(self, n_classes):
+        super().__init__(n_classes, bidirectional=False)
 
 class MixtureAmortizer(tf.keras.Model, AmortizedTarget):
     def __init__(self, inference_net):
