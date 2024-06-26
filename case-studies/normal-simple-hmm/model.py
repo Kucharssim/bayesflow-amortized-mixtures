@@ -46,6 +46,19 @@ simulator = Simulator(simulator_fun=simulator_fun)
 model = GenerativeModel(prior=prior, simulator=simulator)
 
 
+latex_model = r"""
+\begin{equation}
+\begin{aligned}
+\alpha_k & \sim \text{Dirichlet}([2, 2]) & k \in {1, 2} \\
+(\mu_1, \mu_2) & \sim \text{Normal}\Big([-1.5, 1.5], \mathbb{I} \Big)_{\mu_1 < \mu_2} \\
+z_{1} & \sim \text{Categorical}\Big([0.5, 0.5]\Big) \\
+z_{t} & \sim \text{Categorical}(\alpha_{z_{t-1}}) & t \in 2 \dots \text{T}\\
+y_{t} & \sim \text{Normal}(\mu_{z_{t}}, 1) & t \in 1 \dots \text{T}
+\end{aligned}
+\end{equation}
+"""
+
+
 def constrain_parameters(parameters):
     parameters = np.array(parameters)
     parameters[..., 0] = expit(parameters[..., 0])
