@@ -7,8 +7,8 @@ functions {
 
         for (t in 2:T) {
             for (j in 1:K) {
-            vector[K] log_current = log_alpha[t-1] + log_transition[:,j] + emission_log_likelihoods[t, j];
-            log_alpha[t,j] = log_sum_exp(log_current);
+                vector[K] log_current = log_alpha[t-1] + log_transition[:,j] + emission_log_likelihoods[t, j];
+                log_alpha[t,j] = log_sum_exp(log_current);
             }
         }
 
@@ -18,7 +18,7 @@ functions {
     array[] vector backward(int K, int T, vector log_initial, matrix log_transition, array[] vector emission_log_likelihoods) {
         array[T] vector[K] log_beta;
 
-        log_beta[T] = rep_vector(1, K);
+        log_beta[T] = rep_vector(0.0, K);
 
         for(tback in 1:(T-1)){
             int t = T-tback;
