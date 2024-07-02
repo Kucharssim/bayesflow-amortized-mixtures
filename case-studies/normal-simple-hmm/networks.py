@@ -76,69 +76,82 @@ class MixtureAmortizer(tf.keras.Model, AmortizedTarget):
         return probs
     
 
+class Reverse(tf.keras.layers.Layer):
+    def __init__(self, axis, **kwargs):
+        super(Reverse, self).__init__(**kwargs)
+        self.axis = axis
 
+    def call(self, input):
+        return tf.reverse(input, axis=[self.axis])
 
+class Backward(tf.keras.Model):
+    def __init__(self, net, axis, **kwargs):
+        super(Backward, self).__init__(**kwargs)
 
+        self.net = Sequential([
+            Reverse(axis),
+            net,
+            Reverse(axis)
+        ])
 
+    def __call__(self, input):
+        return self.net(input)
 
-
-class Sequences(tf.keras.Model):
-    def __init__(self, units=128):
-        super().__init__()
-        self.lstm = LSTM(units, return_sequences=True)
-
-    def __call__(self, x, backward=False):
-        if backward:
-            x = tf.reverse(x, axis=1)
-
-        output = self.lstm(x)
-
-        if backward:
-            output = tf.reverse(output, axis=1)
-
-        return output
 
 class Classifier(tf.keras.Model):
     def __init__(self, n_classes, n_units):
-        super().__init__(self)
+        super(Classifier, self).__init__()
+        net = Sequential()
+        for unit in n_units:
+            net.add(Dense(unit))
+        net.add(Dense(n_classes))
+        net = TimeDistributed(net)
+        self.net = net
 
-        inner_layers = Sequential([Dense(n) for n in n_units])
-        outer_layer = Dense(n_classes)
-        self.net = TimeDistributed(Sequential([inner_layers, outer_layer]))
-    
-    def __call__(self, x, conditions):
-        """
-        x - (batch_size, n_observations, n_features)
-        conditions - (batch_size, n_conditions)
+    def call(self, inputs):
+        return self.net(inputs)
 
-        output - (batch_size, n_observations, n_classes)
-        """ 
-
-        conditions = tf.expand_dims(conditions, 1)
-        conditions = tf.tile(conditions, [1, tf.shape(x)[1], 1])
-
-        input = tf.concat([x, conditions], axis=-1)
-
-        output = self.net(input)
-
-        return output
 
 class AmortizedMixture(tf.keras.Model, AmortizedTarget):
-    def __init__(self, inference_net, forward_net=None, backward_net=None, loss=CategoricalCrossentropy(from_logits=True)):
-        super().__init__()
+    def __init__(self, inference_net, local_summary_net=None, loss=CategoricalCrossentropy(from_logits=True)):
+        super(AmortizedMixture, self).__init__()
 
-        self.inference_net=inference_net
-        self.forward_net=forward_net
-        self.backward_net=backward_net
+        self.inference_net=TimeDistributed(inference_net)
+        self.local_summary_net=local_summary_net
         self.loss=loss
 
     def __call__(self, input_dict):
-        if self.forward_net:
-            forward_summary = self.forward_net(input_dict["observables"])
+        """
+        observables - (batch_size, n_observations, n_features)
+        parameters - (batch_size, n_samples, n_conditions)
 
-        summary = forward_summary
+        output - (batch_size, n_samples, n_observations, n_classes)
+        """ 
 
-        output = self.inference_net(summary, input_dict['parameters'])
+        input = self._concat_conditions(input_dict)
+        output = self.inference_net(input)
+        return output
+    
+    def _calculate_summaries(self, input_dict):
+        output = input_dict["summary_conditions"]
+
+        if self.local_summary_net:
+            output = self.local_summary_net(output)
+
+        return output
+    
+    def _concat_conditions(self, input_dict):
+        summaries = self._calculate_summaries(input_dict) # (batch_size, n_observations, n_features)
+        conditions = input_dict["direct_conditions"] # (batch_size, n_samples, n_conditions)
+
+        summaries = tf.expand_dims(summaries, 1)
+        summaries = tf.tile(summaries, [1, tf.shape(conditions)[1], 1, 1])
+
+        conditions = tf.expand_dims(conditions, 2)
+        # (batch_size, n_samples, n_observations, n_features + n_conditions)
+        conditions = tf.tile(conditions, [1, 1, tf.shape(summaries)[2], 1])
+
+        output = tf.concat([summaries, conditions], axis=-1)
 
         return output
 
@@ -152,15 +165,43 @@ class AmortizedMixture(tf.keras.Model, AmortizedTarget):
         probs = tf.nn.softmax(logits, axis=-1)
         return tf.math.log(probs)
 
-    def sample(self, observables, parameters):
-        pass
+    def sample(self, input_dict, return_logits=False):
+        logits = self(input_dict)
+        if return_logits:
+            output = logits
+        else:
+            output = tf.nn.softmax(logits)
+
+        return output
 
 
+class AmortizedSmoothing(tf.keras.Model, AmortizedTarget):
+    def __init__(self, forward, backward):
+        super(AmortizedSmoothing, self).__init__()
 
-class ReverseLayer(tf.keras.layers.Layer):
-    def __init__(self, axis, **kwargs):
-        super(ReverseLayer, self).__init__(**kwargs)
-        self.axis = axis
+        self.forward = forward
+        self.backward = backward
+    def __call__(self, forward_dict, backward_dict):
+        f=self.forward(forward_dict)
+        f=f-tf.reduce_mean(f)
+        b=self.backward(backward_dict)
+        b=b-tf.reduce_mean(f)
+        return f+b
+    def compute_loss(self, forward_dict, backward_dict):
+        f=self.forward(forward_dict)
+        b=self.backward(backward_dict)
+        fb = f+b
+        return f, b, fb
+    
+    def log_prob(self, input_dict):
+        logits = self(input_dict)
+        probs = tf.nn.softmax(logits, axis=-1)
+        return tf.math.log(probs)
+    def sample(self, forward_dict, backward_dict, return_logits=False):
+        logits = self(forward_dict, backward_dict)
+        if return_logits:
+            output = logits
+        else:
+            output = tf.nn.softmax(logits)
 
-    def call(self, inputs):
-        return tf.reverse(inputs, axis=[self.axis])
+        return output

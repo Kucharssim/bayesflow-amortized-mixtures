@@ -76,11 +76,13 @@ generated quantities {
     array[n_obs] vector[n_cls] log_beta; //backward variable
     array[n_obs] simplex[n_cls] smoothing; // p(state_t | y_{1:T})
     array[n_obs] simplex[n_cls] filtering; // p(state_t | y_{1:t})
+    array[n_obs] simplex[n_cls] backward_filtering; // p(state_t | y_{t+1:T})
 
     log_beta = backward(n_cls, n_obs, log_init_prob, log_transition_matrix, emission_log_likelihoods);
 
     for (obs in 1:n_obs) {
-        smoothing[obs] = softmax(log_alpha[obs] + log_beta[obs]);
-        filtering[obs] = softmax(log_alpha[obs]);
+        smoothing[obs]          = softmax(log_alpha[obs] + log_beta[obs]);
+        filtering[obs]          = softmax(log_alpha[obs]);
+        backward_filtering[obs] = softmax(log_beta[obs]);
     }
 }
