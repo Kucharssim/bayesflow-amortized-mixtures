@@ -29,6 +29,16 @@ class Backward(tf.keras.Model):
 
     def __call__(self, input):
         return self.net(input)
+    
+class Shift(tf.keras.layers.Layer):
+    def __init__(self, by=1):
+        super(Shift, self).__init__()
+        self.padding  = tf.keras.layers.ZeroPadding1D((0, by))
+        self.cropping = tf.keras.layers.Cropping1D((by,0))
+    def __call__(self, input):
+        output = self.padding(input)
+        output = self.cropping(output)
+        return output
 
 
 class Classifier(tf.keras.Model):
@@ -103,38 +113,45 @@ class AmortizedMixture(tf.keras.Model, AmortizedTarget):
         if return_logits:
             output = logits
         else:
-            output = tf.nn.softmax(logits)
+            output = tf.nn.softmax(logits, axis=-1)
 
         return output
 
 
 class AmortizedSmoothing(tf.keras.Model, AmortizedTarget):
-    def __init__(self, forward, backward):
+    def __init__(self, forward, backward, loss=CategoricalCrossentropy(from_logits=True)):
         super(AmortizedSmoothing, self).__init__()
 
         self.forward = forward
         self.backward = backward
-    def __call__(self, forward_dict, backward_dict):
-        f=self.forward(forward_dict)
-        f=f-tf.reduce_mean(f)
-        b=self.backward(backward_dict)
-        b=b-tf.reduce_mean(f)
-        return f+b
-    def compute_loss(self, forward_dict, backward_dict):
-        f=self.forward(forward_dict)
-        b=self.backward(backward_dict)
-        fb = f+b
-        return f, b, fb
+        self.loss = loss
+        self.shift = TimeDistributed(Shift(by=1))
+    def __call__(self, input_dict, shift=False):
+        f=self.forward(input_dict)
+        b=self.backward(input_dict)
+
+        if shift:
+            b = self.shift(b)
+
+        return f, b, f+b
+    def compute_loss(self, input_dict, **kwargs):
+        f, b, _ = self(input_dict)
+
+        latents = input_dict["latents"]
+        f = self.loss(latents, f)
+        b = self.loss(latents, b)
+        #fb = self.loss(latents, fb)
+        return {"forward.loss": f, "backward.loss:": b}#, "smoothing.loss:": fb}
     
     def log_prob(self, input_dict):
         logits = self(input_dict)
         probs = tf.nn.softmax(logits, axis=-1)
         return tf.math.log(probs)
-    def sample(self, forward_dict, backward_dict, return_logits=False):
-        logits = self(forward_dict, backward_dict)
+    def sample(self, input_dict, return_logits=False, shift=True):
+        logits = self(input_dict, shift=shift)
         if return_logits:
             output = logits
         else:
-            output = tf.nn.softmax(logits)
+            output = tf.nn.softmax(logits, axis=-1)
 
         return output
