@@ -1,4 +1,5 @@
 import tensorflow as tf
+import numpy as np
 from tensorflow.keras.layers import LSTM, Bidirectional, Dense, TimeDistributed
 from tensorflow.keras.models import Sequential
 from bayesflow.amortizers import AmortizedTarget
@@ -16,19 +17,27 @@ class Reverse(tf.keras.layers.Layer):
 
     def call(self, input):
         return tf.reverse(input, axis=[self.axis])
+    
 
-class Backward(tf.keras.Model):
-    def __init__(self, net, axis, **kwargs):
-        super(Backward, self).__init__(**kwargs)
+def Backward(net, axis=1):
+    return Sequential([
+        Reverse(axis),
+        net,
+        Reverse(axis)
+    ])
 
-        self.net = Sequential([
-            Reverse(axis),
-            net,
-            Reverse(axis)
-        ])
+# class Backward(tf.keras.Model):
+#     def __init__(self, net, axis, **kwargs):
+#         super(Backward, self).__init__(**kwargs)
 
-    def __call__(self, input):
-        return self.net(input)
+#         self.net = Sequential([
+#             Reverse(axis),
+#             net,
+#             Reverse(axis)
+#         ])
+
+#     def __call__(self, input):
+#         return self.net(input)
     
 class Shift(tf.keras.layers.Layer):
     def __init__(self, by=1):
@@ -74,29 +83,6 @@ class AmortizedMixture(tf.keras.Model, AmortizedTarget):
         input = self._concat_conditions(input_dict)
         output = self.inference_net(input)
         return output
-    
-    def _calculate_summaries(self, input_dict):
-        output = input_dict["summary_conditions"]
-
-        if self.local_summary_net:
-            output = self.local_summary_net(output)
-
-        return output
-    
-    def _concat_conditions(self, input_dict):
-        summaries = self._calculate_summaries(input_dict) # (batch_size, n_observations, n_features)
-        conditions = input_dict["direct_conditions"] # (batch_size, n_samples, n_conditions)
-
-        summaries = tf.expand_dims(summaries, 1)
-        summaries = tf.tile(summaries, [1, tf.shape(conditions)[1], 1, 1])
-
-        conditions = tf.expand_dims(conditions, 2)
-        # (batch_size, n_samples, n_observations, n_features + n_conditions)
-        conditions = tf.tile(conditions, [1, 1, tf.shape(summaries)[2], 1])
-
-        output = tf.concat([summaries, conditions], axis=-1)
-
-        return output
 
     def compute_loss(self, input_dict, **kwargs):
         logits = self(input_dict)
@@ -119,34 +105,77 @@ class AmortizedMixture(tf.keras.Model, AmortizedTarget):
 
 
 class AmortizedSmoothing(tf.keras.Model, AmortizedTarget):
-    def __init__(self, forward, backward, loss=CategoricalCrossentropy(from_logits=True)):
+    def __init__(self, forward_net, backward_net, local_summary_net=None, loss=CategoricalCrossentropy(from_logits=True)):
         super(AmortizedSmoothing, self).__init__()
 
-        self.forward = forward
-        self.backward = backward
+        self.forward_net = TimeDistributed(forward_net)
+        self.backward_net = TimeDistributed(backward_net)
+        self.local_summary_net = local_summary_net
         self.loss = loss
         self.shift = TimeDistributed(Shift(by=1))
+
     def __call__(self, input_dict, shift=False):
-        f=self.forward(input_dict)
-        b=self.backward(input_dict)
+        """
+        observables - (batch_size, n_observations, n_features)
+        parameters - (batch_size, n_samples, n_conditions)
+
+        output - (batch_size, n_samples, n_observations, n_classes)
+        """ 
+
+        input = self._concat_conditions(input_dict)
+        forward = self.forward_net(input)
+        backward = self.backward_net(input)
 
         if shift:
-            b = self.shift(b)
+            backward = self.shift(backward)
 
-        return f, b, f+b
+        return forward, backward, forward + backward
+    
+    def _calculate_summaries(self, input_dict):
+        output = input_dict["summary_conditions"]
+
+        if self.local_summary_net:
+            output = self.local_summary_net(output)
+
+        return output
+    
+    def _concat_conditions(self, input_dict):
+        summaries = self._calculate_summaries(input_dict) # (batch_size, n_observations, n_units)
+        parameters = input_dict.get("parameters") # (bacth_size, n_samples, n_parameters)
+        conditions = input_dict.get("direct_conditions") # (batch_size, n_conditions)
+
+        output = []
+
+        summaries = tf.expand_dims(summaries, 1)
+        summaries = tf.tile(summaries, [1, tf.shape(parameters)[1], 1, 1])
+        output.append(summaries)
+
+        parameters = tf.expand_dims(parameters, 2)
+        parameters = tf.tile(parameters, [1, 1, tf.shape(summaries)[2], 1])
+        output.append(parameters)
+
+        if conditions is not None:
+            conditions = tf.expand_dims(conditions, 1)
+            conditions = tf.expand_dims(conditions, 1)
+            conditions = tf.tile(conditions, [1, tf.shape(parameters)[1], tf.shape(summaries)[2], 1])
+            output.append(conditions)
+
+        # (batch_size, n_samples, n_observations, n_units + n_parameters + n_conditions)
+        output = tf.concat(output, axis=-1)
+
+        return output
+
     def compute_loss(self, input_dict, **kwargs):
         f, b, _ = self(input_dict)
 
         latents = input_dict["latents"]
         f = self.loss(latents, f)
         b = self.loss(latents, b)
-        #fb = self.loss(latents, fb)
-        return {"forward.loss": f, "backward.loss:": b}#, "smoothing.loss:": fb}
+        return {"forward.loss": f, "backward.loss:": b}
     
     def log_prob(self, input_dict):
-        logits = self(input_dict)
-        probs = tf.nn.softmax(logits, axis=-1)
-        return tf.math.log(probs)
+        pass
+
     def sample(self, input_dict, return_logits=False, shift=True):
         logits = self(input_dict, shift=shift)
         if return_logits:
@@ -155,3 +184,46 @@ class AmortizedSmoothing(tf.keras.Model, AmortizedTarget):
             output = tf.nn.softmax(logits, axis=-1)
 
         return output
+    
+class AmortizedPosteriorMixture(tf.keras.Model, AmortizedTarget):
+    def __init__(self, amortized_posterior, amortized_mixture):
+        super(AmortizedPosteriorMixture, self).__init__()
+
+        self.amortized_posterior=amortized_posterior
+        self.amortized_mixture=amortized_mixture
+    
+    def __call__(self, input_dict, **kwargs):
+        posterior = self.amortized_posterior(input_dict["posterior_inputs"], **kwargs)
+        mixture = self.amortized_mixture(input_dict["mixture_inputs"], **kwargs)
+
+        return posterior, mixture
+    
+    def compute_loss(self, input_dict, **kwargs):
+        posterior = self.amortized_posterior.compute_loss(input_dict["posterior_inputs"], **kwargs)
+        mixture = self.amortized_mixture.compute_loss(input_dict["mixture_inputs"], **kwargs)
+
+        if isinstance(mixture, dict):
+            loss = mixture
+            loss['posterior.loss'] = posterior
+        else:
+            loss = {"posterior.loss": posterior, "mixture.loss": mixture}
+        
+        return loss
+    
+    def log_prob(self, **kwargs):
+        pass
+    
+    def sample(self, input_dict, n_samples, to_numpy=True, **kwargs):
+        posterior = self.amortized_posterior.sample(input_dict["posterior_inputs"], n_samples, to_numpy=False, **kwargs)
+
+        if len(posterior.shape) == 2: # because posterior drops first dim if batches==1
+            posterior = tf.expand_dims(posterior, axis=0)
+
+        input_dict["mixture_inputs"]["parameter"] = posterior
+        mixture = self.amortized_mixture.sample(input_dict["mixture_inputs"], **kwargs)
+
+        if to_numpy:
+            posterior = np.array(posterior)
+            mixture = np.array(mixture)
+
+        return posterior, mixture

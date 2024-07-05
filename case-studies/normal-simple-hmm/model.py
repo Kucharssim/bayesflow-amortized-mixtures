@@ -83,18 +83,11 @@ def configurator_classificators(input_dict):
 
     output_dict = {
         "summary_conditions": input_dict["observables"],
-        "direct_conditions": expand_dims(input_dict["parameters"], axis=1),
+        "parameters": expand_dims(input_dict["parameters"], axis=1),
         "latents": expand_dims(input_dict["latents"], axis=1), 
     }
 
     return output_dict
-
-def configurator_backward(input_dict):
-    input_dict = configurator_classificators(input_dict)
-    input_dict['summary_conditions'] = reverse(input_dict['summary_conditions'], axis=[1])
-    input_dict['latents'] = reverse(input_dict['latents'], axis=[2])
-
-    return input_dict
 
 
 
