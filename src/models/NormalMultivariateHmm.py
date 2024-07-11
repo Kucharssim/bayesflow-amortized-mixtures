@@ -8,10 +8,10 @@ def prior_fun():
     a11 = np.random.beta(2, 2)
     a22 = np.random.beta(2, 2)
 
-    
-    mu = np.random.normal(loc=[-0.5, -0.5])
+    loc = [-1,1]
+    mu = np.random.normal(loc=loc)
     while mu[1] < mu[0]: # order constraint
-        mu = np.random.normal(loc=[-0.5, 0.5])
+        mu = np.random.normal(loc=loc)
 
     # transform parameters into unconstrained real space
     return np.r_[logit(a11), logit(a22), mu[0], np.log(mu[1] - mu[0])]
@@ -55,7 +55,7 @@ latex_model = r"""
 \begin{equation}
 \begin{aligned}
 \alpha_k & \sim \text{Dirichlet}\Big((2, 2)\Big) & k \in \{1, 2\} \\
-(\mu_1, \mu_2) & \sim \text{Normal}\Big((-1.5, 1.5), \mathbb{I} \Big)_{\mu_1 < \mu_2} \\
+(\mu_1, \mu_2) & \sim \text{Normal}\Big((-1, 1), \mathbb{I} \Big)_{\mu_1 < \mu_2} \\
 z_{1} & \sim \text{Categorical}\Big((0.5, 0.5)\Big) \\
 z_{t} & \sim \text{Categorical}(\alpha_{z_{t-1}}) & t \in \{ 2, \dots, \text{T} \}\\
 y_{t} & \sim \text{Normal}(\mu_{z_{t}}, 1) & t \in \{ 1, \dots, \text{T} \}

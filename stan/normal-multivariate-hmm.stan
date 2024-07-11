@@ -43,8 +43,8 @@ model {
     target += log_sum_exp(log_alpha[n_obs]);
 
     
-    target += normal_lpdf(mu[1] | -0.5, 1);
-    target += normal_lpdf(mu[2] |  0.5, 1);
+    target += normal_lpdf(mu[1] | -1.0, 1);
+    target += normal_lpdf(mu[2] |  1., 1);
     target += dirichlet_lpdf(transition_matrix[1] | [2, 2]);
     target += dirichlet_lpdf(transition_matrix[2] | [2, 2]);
 }
