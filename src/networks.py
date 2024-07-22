@@ -44,7 +44,7 @@ class Classifier(tf.keras.Model):
         for unit in n_units:
             net.add(Dense(unit))
         net.add(Dense(n_classes))
-        net = TimeDistributed(net)
+        net = TimeDistributed(net) # over n_observations
         self.net = net
 
     def call(self, inputs):
@@ -52,10 +52,13 @@ class Classifier(tf.keras.Model):
 
 
 class AmortizedMixture(tf.keras.Model, AmortizedTarget):
-    def __init__(self, inference_net, local_summary_net=None, loss=CategoricalCrossentropy(from_logits=True)):
+    def __init__(self, inference_net, local_summary_net=None, loss=CategoricalCrossentropy(from_logits=True), time_distributed=True):
         super(AmortizedMixture, self).__init__()
 
-        self.inference_net=TimeDistributed(inference_net)
+        if time_distributed:
+            self.inference_net=TimeDistributed(inference_net) # over n_samples
+        else:
+            self.inference_net=inference_net
         self.local_summary_net=local_summary_net
         self.loss=loss
 
@@ -69,6 +72,40 @@ class AmortizedMixture(tf.keras.Model, AmortizedTarget):
 
         input = self._concat_conditions(input_dict)
         output = self.inference_net(input)
+        return output
+    
+    def _calculate_summaries(self, input_dict):
+        output = input_dict["summary_conditions"]
+
+        if self.local_summary_net:
+            output = self.local_summary_net(output)
+
+        return output
+    
+    def _concat_conditions(self, input_dict):
+        summaries = self._calculate_summaries(input_dict) # (batch_size, n_observations, n_units)
+        parameters = input_dict.get("parameters") # (bacth_size, n_samples, n_parameters)
+        conditions = input_dict.get("direct_conditions") # (batch_size, n_conditions)
+
+        output = []
+
+        summaries = tf.expand_dims(summaries, 1)
+        summaries = tf.tile(summaries, [1, tf.shape(parameters)[1], 1, 1])
+        output.append(summaries)
+
+        parameters = tf.expand_dims(parameters, 2)
+        parameters = tf.tile(parameters, [1, 1, tf.shape(summaries)[2], 1])
+        output.append(parameters)
+
+        if conditions is not None:
+            conditions = tf.expand_dims(conditions, 1)
+            conditions = tf.expand_dims(conditions, 1)
+            conditions = tf.tile(conditions, [1, tf.shape(parameters)[1], tf.shape(summaries)[2], 1])
+            output.append(conditions)
+
+        # (batch_size, n_samples, n_observations, n_units + n_parameters + n_conditions)
+        output = tf.concat(output, axis=-1)
+
         return output
 
     def compute_loss(self, input_dict, **kwargs):
