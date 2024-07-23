@@ -52,13 +52,10 @@ class Classifier(tf.keras.Model):
 
 
 class AmortizedMixture(tf.keras.Model, AmortizedTarget):
-    def __init__(self, inference_net, local_summary_net=None, loss=CategoricalCrossentropy(from_logits=True), time_distributed=True):
+    def __init__(self, inference_net, local_summary_net=None, loss=CategoricalCrossentropy(from_logits=True)):
         super(AmortizedMixture, self).__init__()
 
-        if time_distributed:
-            self.inference_net=TimeDistributed(inference_net) # over n_samples
-        else:
-            self.inference_net=inference_net
+        self.inference_net=inference_net
         self.local_summary_net=local_summary_net
         self.loss=loss
 
@@ -75,7 +72,7 @@ class AmortizedMixture(tf.keras.Model, AmortizedTarget):
         return output
     
     def _calculate_summaries(self, input_dict):
-        output = input_dict["summary_conditions"]
+        output = input_dict.get("summary_conditions")
 
         if self.local_summary_net:
             output = self.local_summary_net(output)
@@ -110,7 +107,7 @@ class AmortizedMixture(tf.keras.Model, AmortizedTarget):
 
     def compute_loss(self, input_dict, **kwargs):
         logits = self(input_dict)
-        loss = self.loss(input_dict["latents"], logits)
+        loss = self.loss(input_dict.get("latents"), logits)
         return loss
     
     def log_prob(self, input_dict):
