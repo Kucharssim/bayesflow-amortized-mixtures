@@ -7,7 +7,6 @@ data {
     int n_rep; // number of repetitions per timepoint
     array[n_obs, n_rep] real y; // observations
     array[n_obs, n_rep] int valid; // indicator whether the given value in `y` is valid or missing
-    array[2] vector[2] alpha; // prior on transition probability matrix
 }
 transformed data {
     int n_cls = 2;
