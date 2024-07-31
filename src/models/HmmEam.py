@@ -4,6 +4,7 @@ from bayesflow.simulation import Prior, Simulator, GenerativeModel
 from scipy.special import logit, expit
 from tensorflow import one_hot, expand_dims, concat
 from scipy.stats import norm
+from numba import njit
 
 def truncated_normal(loc, scale, lower, upper, size):
     p1 = norm.cdf(lower, loc, scale)
@@ -12,13 +13,17 @@ def truncated_normal(loc, scale, lower, upper, size):
     x = (scale * norm.ppf(u)) + loc
     return x
 
+def positive_normal(loc, scale, size=1):
+    return truncated_normal(loc, scale, lower=0, upper=np.inf, size=size)
+
+@njit
 def wald(alpha, nu, size=1):
     mu = alpha/nu
     lam = alpha**2
     zeta = np.random.standard_normal(size)
     zeta_sq = zeta**2
-    x = mu + (mu**2*zeta_sq)/(2*lam) - mu/(2*lam)*np.sqrt(4*mu*lam*zeta_sq + mu**2*zeta_sq**2);
-    z = np.random.uniform(0, 1, size=size);
+    x = mu + (mu**2*zeta_sq)/(2*lam) - mu/(2*lam)*np.sqrt(4*mu*lam*zeta_sq + mu**2*zeta_sq**2)
+    z = np.random.uniform(0, 1, size=size)
     y = np.zeros(size)
 
     y[np.where(z <= mu / (mu + x))] = x
@@ -29,14 +34,14 @@ def wald(alpha, nu, size=1):
 def unconstrain_parameters(x, axis=-1):
     def unc(x):
         y = np.copy(x)
-        y[0] = logit(y[0])
-        y[1] = logit(y[1])
-        y[2] = np.log(y[2])
-        y[3] = np.log(y[3] - x[2])
-        y[4] = np.log(y[4])
-        y[5] = np.log(y[5])
-        y[6] = np.log(y[6] - x[5])
-        y[7] = np.log(y[7])
+        y[0] = logit(y[0]) # rho_11
+        y[1] = logit(y[1]) # rho_22
+        y[2] = np.log(y[2]) # alpha_1
+        y[3] = np.log(y[3]) # alpha_2_diff
+        y[4] = np.log(y[4]) # nu_1
+        y[5] = np.log(y[5]) # nu_21
+        y[6] = np.log(y[6]) # nu_22_diff
+        y[7] = np.log(y[7]) # tau
         return y
 
     return np.apply_along_axis(unc, axis=axis, arr=x)
@@ -44,34 +49,34 @@ def unconstrain_parameters(x, axis=-1):
 def constrain_parameters(x, axis=-1):
     def con(x):
         y = np.copy(x)
-        y[0] = expit(y[0])
-        y[1] = expit(y[1])
-        y[2] = np.exp(y[2])
-        y[3] = np.exp(y[3]) + y[2]
-        y[4] = np.exp(y[4])
-        y[5] = np.exp(y[5])
-        y[6] = np.exp(y[6]) + y[5]
-        y[7] = np.exp(y[7])
+        y[0] = expit(y[0]) # rho_11
+        y[1] = expit(y[1]) # rho_22
+        y[2] = np.exp(y[2]) # alpha_1
+        y[3] = np.exp(y[3]) + y[2] # alpha_2
+        y[4] = np.exp(y[4]) # nu_1
+        y[5] = np.exp(y[5]) # nu_21
+        y[6] = np.exp(y[6]) + y[5] # nu_22
+        y[7] = np.exp(y[7]) # tau
         return y
 
     return np.apply_along_axis(con, axis=axis, arr=x)
 
 
 def prior_fun():
-    r11 = np.random.beta(2, 2)
-    r22 = np.random.beta(2, 2)
+    rho_11 = np.random.beta(10, 4)
+    rho_22 = np.random.beta(10, 4)
 
-    a1 = truncated_normal(1.0, 0.5, 0.0, np.inf, 1) # guessing
-    a2 = a1 + truncated_normal(0.5, 0.5, 0.0, np.inf, 1) # controlled
+    alpha_1 = positive_normal(1.5, 1.0) # guessing
+    alpha_2_diff = positive_normal(2.0, 0.5) # controlled
 
-    v1 = truncated_normal(2.0, 0.5, 0.0, np.inf, 1) # guessing
+    nu_1 = positive_normal(2.5, 0.5) # guessing
 
-    v21 = truncated_normal(0.5, 0.5, 0.0, np.inf, 1) # controlled-incorrect
-    v22 = v21 + truncated_normal(1.0, 0.5, 0.0, np.inf, 1) # controlled-correct
+    nu_21 = positive_normal(2.0, 0.5) # controlled-incorrect
+    nu_22_diff = positive_normal(0.5, 0.5) # controlled-correct
 
     tau = np.random.exponential(scale=0.2)
 
-    pars = np.r_[r11, r22, a1, a2, v1, v21, v22, tau]
+    pars = np.r_[rho_11, rho_22, alpha_1, alpha_2_diff, nu_1, nu_21, nu_22_diff, tau]
 
     # transform parameters into unconstrained real space
     return unconstrain_parameters(pars)
@@ -79,8 +84,8 @@ def prior_fun():
 prior = Prior(
     prior_fun=prior_fun, 
     param_names=[r"$logit(\rho_{11})$", r"$logit(\rho_{22})$", 
-                 r"$\log(\alpha_1)$", r"$\log(\alpha_2-\alpha1)$",
-                 r"$\log(\nu_1)$", r"$\log(\nu_{21})$", r"$\log(\nu_{22})$", 
+                 r"$\log(\alpha_1)$", r"$\log(\alpha_2-\alpha_1)$",
+                 r"$\log(\nu_1)$", r"$\log(\nu_{21})$", r"$\log(\nu_{22}-\nu_{21})$", 
                  r"$\log(\tau)$"])
 
 constrained_parameter_names = [r"$\rho_{11}$", r"$\rho_{22}$", 
@@ -89,28 +94,33 @@ constrained_parameter_names = [r"$\rho_{11}$", r"$\rho_{22}$",
                  r"$\tau$"]
 
 def simulator_fun(theta):
-    (r11, r22, a1, a2, v1, v21, v22, tau) = constrain_parameters(theta)
+    (rho_11, rho_22, alpha_1, alpha_2, nu_1, nu_21, nu_22, tau) = constrain_parameters(theta)
 
-    transition_matrix = [[r11, 1-r11], [1-r22, r22]]
+    transition_matrix = [[rho_11, 1-rho_11], [1-rho_22, rho_22]]
 
     state = np.random.choice(a=[0, 1], p=[0.5, 0.5])
-    states = []
-    rts = []
-    responses = []
 
-
-    for _ in range(200):
+    states = np.zeros(200)
+    rts = np.zeros(200)
+    responses = np.zeros(200)
+    for i in range(200):
         if state == 0:
-            rt = wald(a1, v1)[0] + tau
+            rt = wald(alpha_1, nu_1)[0] + tau
             res = np.random.choice(a=[0,1], p=[0.5, 0.5])
         else:
-            passage_times = [wald(a2, v21), wald(a2, v22)]
-            rt = np.min(passage_times) + tau
-            res = np.argmin(passage_times)
-        
-        states.append(state)
-        rts.append(rt)
-        responses.append(res)
+            pass_time_1 = wald(alpha_2, nu_21)[0]
+            pass_time_2 = wald(alpha_2, nu_22)[0]
+
+            if pass_time_1 < pass_time_2:
+                rt = pass_time_1 + tau
+                res = 0
+            else:
+                rt = pass_time_2 + tau
+                res = 1
+
+        states[i] = state
+        rts[i] = rt
+        responses[i] = res
 
         state = np.random.choice(a=[0,1], p=transition_matrix[state])
         
@@ -121,8 +131,6 @@ simulator = Simulator(simulator_fun=simulator_fun)
 model = GenerativeModel(prior=prior, simulator=simulator)
 
 
-
-
 def configurator_posterior(input_dict):
     parameters = input_dict["prior_draws"].astype(np.float32)
 
@@ -131,7 +139,7 @@ def configurator_posterior(input_dict):
 
     return {
         "parameters": parameters,
-        "summary_conditions": expand_dims(concat([rts, responses], axis=-1), axis=-2)
+        "summary_conditions": concat([rts, responses], axis=-1)
     }
 
 def configurator_mixture(input_dict):
