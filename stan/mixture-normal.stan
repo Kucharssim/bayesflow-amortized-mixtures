@@ -3,7 +3,7 @@ data {
     int n_obs; // number of observations to classify
     int n_rep; // number of 'replications' for each observation
     array[n_obs,n_rep] real y; // observations
-    vector[n_cls] mu_prior; // prior means if components
+    vector[n_cls] mu_prior; // prior means of components
     vector[n_cls] mixture_prior; // prior on mixture proportions
 }
 parameters {
