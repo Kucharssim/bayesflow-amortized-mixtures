@@ -2,7 +2,7 @@ import numpy as np
 
 from bayesflow.simulation import Prior, ContextGenerator, Simulator, GenerativeModel
 from tensorflow import one_hot, expand_dims
-from ..Constraints import simplex, ordered
+from ..constraints import simplex, ordered
 
 def ordered_normal(loc):
     output = np.random.normal(loc)
