@@ -45,8 +45,8 @@ prior = Prior(prior_fun=prior_fun, param_names=param_names)
 constrained_parameter_names = [r"$\pi_1$", r"$\pi_2$", r"$\pi_3$", r"$\mu_1$", r"$\mu_2$", r"$\mu_3$"]
 
 def context_fun():
-    n_obs = np.random.randint(low=100, high=301)
-    n_rep = np.random.randint(low=1, high=6)
+    n_obs = np.random.randint(low=150, high=251)
+    n_rep = np.random.randint(low=2, high=5)
 
     return np.r_[n_obs, n_rep]
 
