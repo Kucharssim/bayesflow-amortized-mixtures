@@ -32,6 +32,7 @@ def wald(alpha, nu, size=1):
     return y
 
 def unconstrain_parameters(x, rts, axis=-1):
+    x = np.copy(x)
     def unc(x):
         y = np.copy(x)
         y[0] = logit(y[0]) # rho_11
@@ -46,10 +47,11 @@ def unconstrain_parameters(x, rts, axis=-1):
 
     min_rts = np.min(rts, axis=-1)
 
-    x[...,7] = x[...,7] / min_rts
+    x[...,7] = x[...,7] / min_rts 
     return np.apply_along_axis(unc, axis=axis, arr=x)
 
 def constrain_parameters(x, rts, axis=-1):
+    x = np.copy(x)
     def con(x):
         y = np.copy(x)
         y[0] = expit(y[0]) # rho_11
@@ -65,8 +67,8 @@ def constrain_parameters(x, rts, axis=-1):
     min_rts = np.min(rts, axis=-1)
 
     y = np.apply_along_axis(con, axis=axis, arr=x)
-    y[...,7] = y[...,7] * min_rts
-    return np.apply_along_axis(con, axis=axis, arr=x)
+    y[...,7] = y[...,7] * min_rts # tau
+    return y
 
 
 def prior_fun():
@@ -74,16 +76,18 @@ def prior_fun():
     rho_22 = np.random.beta(10, 4)
 
     alpha_1 = positive_normal(0.5, 0.3) # guessing
-    alpha_2_diff = positive_normal(1.5, 0.5) # controlled
+    alpha_2_diff = positive_normal(1.5, 0.5)
+    alpha_2 = alpha_1 + alpha_2_diff # controlled
 
     nu_1 = positive_normal(5.5, 1.0) # guessing
 
     nu_21 = positive_normal(2.5, 0.5) # controlled-incorrect
-    nu_22_diff = positive_normal(2.5, 1.0) # controlled-correct
+    nu_22_diff = positive_normal(2.5, 1.0) 
+    nu_22 = nu_21 + nu_22_diff # controlled-correct
 
     tau = np.random.exponential(scale=0.2)
 
-    pars = np.r_[rho_11, rho_22, alpha_1, alpha_1 + alpha_2_diff, nu_1, nu_21, nu_21 + nu_22_diff, tau]
+    pars = np.r_[rho_11, rho_22, alpha_1, alpha_2, nu_1, nu_21, nu_22, tau]
 
     # transform parameters into unconstrained real space
     return pars
@@ -108,10 +112,11 @@ def simulator_fun(theta):
 
     state = np.random.choice(a=[0, 1], p=[0.5, 0.5])
 
-    states = np.zeros(200)
-    rts = np.zeros(200)
-    responses = np.zeros(200)
-    for i in range(200):
+    n_obs = 400
+    states = np.zeros(n_obs)
+    rts = np.zeros(n_obs)
+    responses = np.zeros(n_obs)
+    for i in range(n_obs):
         if state == 0:
             rt = wald(alpha_1, nu_1)[0] + tau
             res = np.random.choice(a=[0,1], p=[0.5, 0.5])
@@ -140,11 +145,11 @@ model = GenerativeModel(prior=prior, simulator=simulator)
 
 
 def configurator_posterior(input_dict):
-    parameters = input_dict["prior_draws"]
-    parameters = unconstrain_parameters(parameters).astype(np.float32)
-
     rts=input_dict["sim_data"][...,:1].astype(np.float32)
     responses=one_hot(input_dict["sim_data"][...,1], 2)
+
+    parameters = input_dict["prior_draws"]
+    parameters = unconstrain_parameters(parameters, rts[...,0]).astype(np.float32)
 
     return {
         "parameters": parameters,
