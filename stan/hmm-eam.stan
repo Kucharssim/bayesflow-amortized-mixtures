@@ -119,11 +119,11 @@ model {
     // priors
     target += dirichlet_lpdf(transition_matrix[1] | [10, 4]);
     target += dirichlet_lpdf(transition_matrix[2] | [4, 10]);
-    target += normal_lpdf(alpha_1 | 1.5, 1.0);
-    target += normal_lpdf(alpha_2_diff | 2.0, 0.5);
-    target += normal_lpdf(nu_1 | 2.5, 0.5);
-    target += normal_lpdf(nu_21 | 2.0, 0.5);
-    target += normal_lpdf(nu_22_diff | 0.5, 0.5);
+    target += normal_lpdf(alpha_1 | 0.5, 0.3);
+    target += normal_lpdf(alpha_2_diff | 1.5, 0.5);
+    target += normal_lpdf(nu_1 | 5.5, 1.0);
+    target += normal_lpdf(nu_21 | 2.5, 0.5);
+    target += normal_lpdf(nu_22_diff | 2.5, 1.0);
     target += exponential_lpdf(tau | 5.0);
 }
 generated quantities {

@@ -129,8 +129,8 @@ class AmortizedSmoothing(tf.keras.Model, AmortizedTarget):
     def __init__(self, forward_net, backward_net, local_summary_net=None, loss=CategoricalCrossentropy(from_logits=True)):
         super(AmortizedSmoothing, self).__init__()
 
-        self.forward_net = TimeDistributed(forward_net)
-        self.backward_net = TimeDistributed(Backward(backward_net))
+        self.forward_net = forward_net
+        self.backward_net = Backward(backward_net)
         self.local_summary_net = local_summary_net
         self.loss = loss
         self.shift = TimeDistributed(Shift(by=1))
@@ -144,8 +144,13 @@ class AmortizedSmoothing(tf.keras.Model, AmortizedTarget):
         """ 
 
         input = self._concat_conditions(input_dict)
-        forward = self.forward_net(input)
+        input, shape = self._to_long(input)
+        
+        forward  = self.forward_net(input)
         backward = self.backward_net(input)
+
+        forward  = self._to_wide(forward,  shape + tf.shape(forward)[-1])
+        backward = self._to_wide(backward, shape + tf.shape(backward)[-1])
 
         if shift:
             backward = self.shift(backward)
@@ -184,6 +189,24 @@ class AmortizedSmoothing(tf.keras.Model, AmortizedTarget):
         # (batch_size, n_samples, n_observations, n_units + n_parameters + n_conditions)
         output = tf.concat(output, axis=-1)
 
+        return output
+    
+    def _to_long(self, input):
+        # input: (batch_size, n_samples, n_observations, n_units + n_parameters + n_conditions)
+        # output: (batch_size * n_samples, n_observations, n_units + n_parameters + n_conditions)
+
+        batch_size = tf.shape(input)[0]
+        n_samples = tf.shape(input)[1]
+        n_observations = tf.shape(input)[2]
+        n_features = tf.shape(input)[3]
+
+        output = tf.reshape(input, (batch_size * n_samples, n_observations, n_features))
+
+        return output, tf.TensorShape([batch_size, n_samples, n_observations])
+
+    def _to_wide(self, input, new_shape):
+        # inverse of _to_long
+        output = tf.reshape(input, new_shape)
         return output
 
     def compute_loss(self, input_dict, **kwargs):

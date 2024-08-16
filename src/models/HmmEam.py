@@ -31,22 +31,25 @@ def wald(alpha, nu, size=1):
     
     return y
 
-def unconstrain_parameters(x, axis=-1):
+def unconstrain_parameters(x, rts, axis=-1):
     def unc(x):
         y = np.copy(x)
         y[0] = logit(y[0]) # rho_11
         y[1] = logit(y[1]) # rho_22
         y[2] = np.log(y[2]) # alpha_1
-        y[3] = np.log(y[3]) # alpha_2_diff
+        y[3] = np.log(y[3] - x[2]) # alpha_2_diff
         y[4] = np.log(y[4]) # nu_1
         y[5] = np.log(y[5]) # nu_21
-        y[6] = np.log(y[6]) # nu_22_diff
-        y[7] = np.log(y[7]) # tau
+        y[6] = np.log(y[6] - x[5]) # nu_22_diff
+        y[7] = logit(y[7]) # tau / min(rt)
         return y
 
+    min_rts = np.min(rts, axis=-1)
+
+    x[...,7] = x[...,7] / min_rts
     return np.apply_along_axis(unc, axis=axis, arr=x)
 
-def constrain_parameters(x, axis=-1):
+def constrain_parameters(x, rts, axis=-1):
     def con(x):
         y = np.copy(x)
         y[0] = expit(y[0]) # rho_11
@@ -56,9 +59,13 @@ def constrain_parameters(x, axis=-1):
         y[4] = np.exp(y[4]) # nu_1
         y[5] = np.exp(y[5]) # nu_21
         y[6] = np.exp(y[6]) + y[5] # nu_22
-        y[7] = np.exp(y[7]) # tau
+        y[7] = expit(y[7]) # tau / min(rt)
         return y
+    
+    min_rts = np.min(rts, axis=-1)
 
+    y = np.apply_along_axis(con, axis=axis, arr=x)
+    y[...,7] = y[...,7] * min_rts
     return np.apply_along_axis(con, axis=axis, arr=x)
 
 
@@ -66,35 +73,36 @@ def prior_fun():
     rho_11 = np.random.beta(10, 4)
     rho_22 = np.random.beta(10, 4)
 
-    alpha_1 = positive_normal(1.5, 1.0) # guessing
-    alpha_2_diff = positive_normal(2.0, 0.5) # controlled
+    alpha_1 = positive_normal(0.5, 0.3) # guessing
+    alpha_2_diff = positive_normal(1.5, 0.5) # controlled
 
-    nu_1 = positive_normal(2.5, 0.5) # guessing
+    nu_1 = positive_normal(5.5, 1.0) # guessing
 
-    nu_21 = positive_normal(2.0, 0.5) # controlled-incorrect
-    nu_22_diff = positive_normal(0.5, 0.5) # controlled-correct
+    nu_21 = positive_normal(2.5, 0.5) # controlled-incorrect
+    nu_22_diff = positive_normal(2.5, 1.0) # controlled-correct
 
     tau = np.random.exponential(scale=0.2)
 
-    pars = np.r_[rho_11, rho_22, alpha_1, alpha_2_diff, nu_1, nu_21, nu_22_diff, tau]
+    pars = np.r_[rho_11, rho_22, alpha_1, alpha_1 + alpha_2_diff, nu_1, nu_21, nu_21 + nu_22_diff, tau]
 
     # transform parameters into unconstrained real space
-    return unconstrain_parameters(pars)
+    return pars
 
 prior = Prior(
     prior_fun=prior_fun, 
-    param_names=[r"$logit(\rho_{11})$", r"$logit(\rho_{22})$", 
-                 r"$\log(\alpha_1)$", r"$\log(\alpha_2-\alpha_1)$",
-                 r"$\log(\nu_1)$", r"$\log(\nu_{21})$", r"$\log(\nu_{22}-\nu_{21})$", 
-                 r"$\log(\tau)$"])
-
-constrained_parameter_names = [r"$\rho_{11}$", r"$\rho_{22}$", 
+    param_names={
+        "unconstrained": [r"$logit(\rho_{11})$", r"$logit(\rho_{22})$", 
+                        r"$\log(\alpha_1)$", r"$\log(\alpha_2-\alpha_1)$",
+                        r"$\log(\nu_1)$", r"$\log(\nu_{21})$", r"$\log(\nu_{22}-\nu_{21})$", 
+                        r"$logit(\tau / min(rt))$"],
+        "constrained": [r"$\rho_{11}$", r"$\rho_{22}$", 
                  r"$\alpha_1$", r"$\alpha_2$",
                  r"$\nu_1$", r"$\nu_{21}$", r"$\nu_{22}$", 
                  r"$\tau$"]
+    })
 
 def simulator_fun(theta):
-    (rho_11, rho_22, alpha_1, alpha_2, nu_1, nu_21, nu_22, tau) = constrain_parameters(theta)
+    (rho_11, rho_22, alpha_1, alpha_2, nu_1, nu_21, nu_22, tau) = theta
 
     transition_matrix = [[rho_11, 1-rho_11], [1-rho_22, rho_22]]
 
@@ -132,7 +140,8 @@ model = GenerativeModel(prior=prior, simulator=simulator)
 
 
 def configurator_posterior(input_dict):
-    parameters = input_dict["prior_draws"].astype(np.float32)
+    parameters = input_dict["prior_draws"]
+    parameters = unconstrain_parameters(parameters).astype(np.float32)
 
     rts=input_dict["sim_data"][...,:1].astype(np.float32)
     responses=one_hot(input_dict["sim_data"][...,1], 2)

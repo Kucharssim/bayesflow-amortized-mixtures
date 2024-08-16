@@ -3,33 +3,32 @@ import os, sys
 sys.path.append(os.path.abspath(os.path.join("../..")))
 
 
-import tensorflow as tf
-import bayesflow as bf
-import numpy as np
-
-
-from tensorflow.keras.layers import LSTM
+from tensorflow.keras.layers import LSTM, Dense
 from tensorflow.keras.models import Sequential
 
 from bayesflow.trainers import Trainer
 from bayesflow.amortizers import AmortizedPosterior
-from bayesflow.networks import InvertibleNetwork, SequenceNetwork, TimeSeriesTransformer
-from bayesflow.summary_networks import DeepSet, HierarchicalNetwork
+from bayesflow.networks import InvertibleNetwork, SequenceNetwork
+#from bayesflow.summary_networks import DeepSet, HierarchicalNetwork
 
-from src.networks import AmortizedSmoothing, AmortizedPosteriorMixture, Classifier
+from src.networks import AmortizedSmoothing, AmortizedPosteriorMixture
 from src.models.HmmEam import model, configurator, constrain_parameters, constrained_parameter_names
 
 
-#local_summary_net = DeepSet(summary_dim=2)
 classification_net = Sequential([
     LSTM(units=32, return_sequences=True), 
-    Classifier(n_classes=2, n_units=[16, 8, 4])
+    Dense(32, activation='relu'),
+    Dense(32, activation='relu'),
+    Dense(16, activation='relu'),
+    Dense(8, activation='relu'),
+    Dense(4, activation='relu'),
+    Dense(2)
 ])
 
 amortizer = AmortizedPosteriorMixture(
     amortized_posterior=AmortizedPosterior(
         inference_net=InvertibleNetwork(num_params=8, num_coupling_layers=10, coupling_design="spline"),
-        summary_net=SequenceNetwork(summary_dim=24, bidirectional=True),#TimeSeriesTransformer(summary_dim=24, input_dim=3),
+        summary_net=SequenceNetwork(summary_dim=24, bidirectional=True),
         summary_loss_fun="MMD"
     ),
     amortized_mixture=AmortizedSmoothing(
