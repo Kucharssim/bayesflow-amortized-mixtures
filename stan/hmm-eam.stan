@@ -117,8 +117,8 @@ model {
      target += log_sum_exp(log_alpha[n_obs]);
 
     // priors
-    target += dirichlet_lpdf(transition_matrix[1] | [10, 4]);
-    target += dirichlet_lpdf(transition_matrix[2] | [4, 10]);
+    target += dirichlet_lpdf(transition_matrix[1] | [16, 4]);
+    target += dirichlet_lpdf(transition_matrix[2] | [4, 16]);
     target += normal_lpdf(alpha_1 | 0.5, 0.3);
     target += normal_lpdf(alpha_2_diff | 1.5, 0.5);
     target += normal_lpdf(nu_1 | 5.5, 1.0);

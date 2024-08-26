@@ -149,8 +149,8 @@ class AmortizedSmoothing(tf.keras.Model, AmortizedTarget):
         forward  = self.forward_net(input)
         backward = self.backward_net(input)
 
-        forward  = self._to_wide(forward,  shape + tf.shape(forward)[-1])
-        backward = self._to_wide(backward, shape + tf.shape(backward)[-1])
+        forward  = self._to_wide(forward,  tf.concat([shape, [tf.shape(forward)[-1]]], axis=0))
+        backward = self._to_wide(backward, tf.concat([shape, [tf.shape(backward)[-1]]], axis=0))
 
         if shift:
             backward = self.shift(backward)
@@ -202,7 +202,7 @@ class AmortizedSmoothing(tf.keras.Model, AmortizedTarget):
 
         output = tf.reshape(input, (batch_size * n_samples, n_observations, n_features))
 
-        return output, tf.TensorShape([batch_size, n_samples, n_observations])
+        return output, tf.stack([batch_size, n_samples, n_observations])
 
     def _to_wide(self, input, new_shape):
         # inverse of _to_long

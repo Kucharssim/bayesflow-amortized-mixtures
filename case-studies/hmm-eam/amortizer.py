@@ -12,23 +12,25 @@ from bayesflow.networks import InvertibleNetwork, SequenceNetwork
 #from bayesflow.summary_networks import DeepSet, HierarchicalNetwork
 
 from src.networks import AmortizedSmoothing, AmortizedPosteriorMixture
-from src.models.HmmEam import model, configurator, constrain_parameters, constrained_parameter_names
+from src.models.HmmEam import model, configurator
 
 
 classification_net = Sequential([
     LSTM(units=32, return_sequences=True), 
     Dense(32, activation='relu'),
     Dense(32, activation='relu'),
+    Dense(32, activation='relu'),
+    Dense(32, activation='relu'),
     Dense(16, activation='relu'),
-    Dense(8, activation='relu'),
-    Dense(4, activation='relu'),
+    Dense( 8, activation='relu'),
+    Dense( 4, activation='relu'),
     Dense(2)
 ])
 
 amortizer = AmortizedPosteriorMixture(
     amortized_posterior=AmortizedPosterior(
-        inference_net=InvertibleNetwork(num_params=8, num_coupling_layers=10, coupling_design="spline"),
-        summary_net=SequenceNetwork(summary_dim=24, bidirectional=True),
+        inference_net=InvertibleNetwork(num_params=8, num_coupling_layers=12, coupling_design="spline"),
+        summary_net=SequenceNetwork(summary_dim=32, bidirectional=True, lstm_units=256, num_conv_layers=4),
         summary_loss_fun="MMD"
     ),
     amortized_mixture=AmortizedSmoothing(
@@ -36,5 +38,6 @@ amortizer = AmortizedPosteriorMixture(
         backward_net=classification_net
     )
 )
+
 
 trainer = Trainer(amortizer=amortizer, generative_model=model, configurator=configurator, checkpoint_path="checkpoints/amortizer")

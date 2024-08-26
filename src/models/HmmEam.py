@@ -6,6 +6,12 @@ from tensorflow import one_hot, expand_dims, concat
 from scipy.stats import norm
 from numba import njit
 
+def logit_scaled(x, lb=0, ub=1):
+    return logit((x - lb) / (ub - lb))
+
+def expit_scaled(x, lb=0, ub=1):
+    return expit(x) * (ub - lb) + lb
+
 def truncated_normal(loc, scale, lower, upper, size):
     p1 = norm.cdf(lower, loc, scale)
     p2 = norm.cdf(upper, loc, scale)
@@ -31,49 +37,41 @@ def wald(alpha, nu, size=1):
     
     return y
 
-def unconstrain_parameters(x, rts, axis=-1):
-    x = np.copy(x)
-    def unc(x):
-        y = np.copy(x)
-        y[0] = logit(y[0]) # rho_11
-        y[1] = logit(y[1]) # rho_22
-        y[2] = np.log(y[2]) # alpha_1
-        y[3] = np.log(y[3] - x[2]) # alpha_2_diff
-        y[4] = np.log(y[4]) # nu_1
-        y[5] = np.log(y[5]) # nu_21
-        y[6] = np.log(y[6] - x[5]) # nu_22_diff
-        y[7] = logit(y[7]) # tau / min(rt)
-        return y
-
+def unconstrain_parameters(x, rts):
+    y = np.copy(x)
     min_rts = np.min(rts, axis=-1)
 
-    x[...,7] = x[...,7] / min_rts 
-    return np.apply_along_axis(unc, axis=axis, arr=x)
+    y[...,0] = logit(x[...,0]) # rho_11
+    y[...,1] = logit(x[...,1]) # rho_22
+    y[...,2] = np.log(x[...,2]) # alpha_1
+    y[...,3] = np.log(x[...,3] - x[...,2]) # alpha_2_diff
+    y[...,4] = np.log(x[...,4]) # nu_1
+    y[...,5] = np.log(x[...,5]) # nu_21
+    y[...,6] = np.log(x[...,6] - x[...,5]) # nu_22_diff
+    y[...,7] = logit_scaled(x[...,7], lb=0.0, ub=min_rts+0.001) # tau / min(rt)
 
-def constrain_parameters(x, rts, axis=-1):
-    x = np.copy(x)
-    def con(x):
-        y = np.copy(x)
-        y[0] = expit(y[0]) # rho_11
-        y[1] = expit(y[1]) # rho_22
-        y[2] = np.exp(y[2]) # alpha_1
-        y[3] = np.exp(y[3]) + y[2] # alpha_2
-        y[4] = np.exp(y[4]) # nu_1
-        y[5] = np.exp(y[5]) # nu_21
-        y[6] = np.exp(y[6]) + y[5] # nu_22
-        y[7] = expit(y[7]) # tau / min(rt)
-        return y
+    return y
+
+def constrain_parameters(x, rts):
+    y = np.copy(x)
+    min_rts = np.min(rts, axis=-1)
     
-    min_rts = np.min(rts, axis=-1)
+    y[...,0] = expit(x[...,0]) # rho_11
+    y[...,1] = expit(x[...,1]) # rho_22
+    y[...,2] = np.exp(x[...,2]) # alpha_1
+    y[...,3] = np.exp(x[...,3]) + y[...,2] # alpha_2
+    y[...,4] = np.exp(x[...,4]) # nu_1
+    y[...,5] = np.exp(x[...,5]) # nu_21
+    y[...,6] = np.exp(x[...,6]) + y[...,5] # nu_22
+    y[...,7] = expit_scaled(x[...,7], lb=0.0, ub=min_rts+0.001)
+    
 
-    y = np.apply_along_axis(con, axis=axis, arr=x)
-    y[...,7] = y[...,7] * min_rts # tau
     return y
 
 
 def prior_fun():
-    rho_11 = np.random.beta(10, 4)
-    rho_22 = np.random.beta(10, 4)
+    rho_11 = np.random.beta(16, 4)
+    rho_22 = np.random.beta(16, 4)
 
     alpha_1 = positive_normal(0.5, 0.3) # guessing
     alpha_2_diff = positive_normal(1.5, 0.5)
