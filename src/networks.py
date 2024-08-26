@@ -26,11 +26,11 @@ def Backward(net, axis=1):
         Reverse(axis)
     ])
     
-class Shift(tf.keras.layers.Layer):
+class Shift2D(tf.keras.layers.Layer):
     def __init__(self, by=1):
-        super(Shift, self).__init__()
-        self.padding  = tf.keras.layers.ZeroPadding1D((0, by))
-        self.cropping = tf.keras.layers.Cropping1D((by,0))
+        super(Shift2D, self).__init__()
+        self.padding  = tf.keras.layers.ZeroPadding2D(((0, 0),(0, by)))
+        self.cropping = tf.keras.layers.Cropping2D(((0, 0),(by, 0)))
     def __call__(self, input):
         output = self.padding(input)
         output = self.cropping(output)
@@ -133,7 +133,7 @@ class AmortizedSmoothing(tf.keras.Model, AmortizedTarget):
         self.backward_net = Backward(backward_net)
         self.local_summary_net = local_summary_net
         self.loss = loss
-        self.shift = TimeDistributed(Shift(by=1))
+        self.shift = Shift2D()
 
     def __call__(self, input_dict, shift=False):
         """
@@ -153,7 +153,7 @@ class AmortizedSmoothing(tf.keras.Model, AmortizedTarget):
         backward = self._to_wide(backward, tf.concat([shape, [tf.shape(backward)[-1]]], axis=0))
 
         if shift:
-            backward = self.shift(backward)
+           backward = self.shift(backward)
 
         return forward, backward, forward + backward
     
