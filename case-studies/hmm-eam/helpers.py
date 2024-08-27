@@ -33,12 +33,12 @@ def plot_marginal_posteriors(stan, bayesflow, param_names):
 
     return fig, axs
 
-def plot_joint_posteriors(stan, bayesflow, param_names):
+def plot_joint_parameters(samples_one, samples_two, param_names, names = ["BayesFlow", "Stan"]):
     figsize = (1.5*len(param_names), 1.5*len(param_names))
     fig, axs = plt.subplots(nrows=len(param_names), ncols=len(param_names), figsize=figsize)
 
     bins = [
-        np.linspace(np.min(bayesflow[:,i]), np.max(bayesflow[:,i]), 31) for i in range(len(param_names))
+        np.linspace(np.min(samples_one[:,i]), np.max(samples_one[:,i]), 31) for i in range(len(param_names))
     ]
 
     handles = [
@@ -50,16 +50,16 @@ def plot_joint_posteriors(stan, bayesflow, param_names):
         for yi, y_par in enumerate(param_names):
             if xi == yi:
                 axs[yi,0].set_ylabel(y_par)
-                axs[yi,xi].hist(bayesflow[:,xi], bins=bins[xi],alpha = 0.5, density=True, color="skyblue")
-                axs[yi,xi].hist(stan[:,xi], bins=bins[xi],alpha = 0.5, density=True, color="darkorange")
+                axs[yi,xi].hist(samples_one[:,xi], bins=bins[xi],alpha = 0.5, density=True, color="skyblue")
+                axs[yi,xi].hist(samples_two[:,xi], bins=bins[xi],alpha = 0.5, density=True, color="darkorange")
             elif xi > yi:
-                axs[yi,xi].scatter(bayesflow[:,xi], bayesflow[:,yi], s=0.5, alpha=0.1, label="skyblue")
-                axs[yi,xi].scatter(stan[:,xi], stan[:,yi], s=0.5, alpha=0.1, label="darkorange")
+                axs[yi,xi].scatter(samples_one[:,xi], samples_one[:,yi], s=0.5, alpha=0.1, label="skyblue")
+                axs[yi,xi].scatter(samples_two[:,xi], samples_two[:,yi], s=0.5, alpha=0.1, label="darkorange")
             else:
-                axs[yi,xi].scatter(bayesflow[:,xi], bayesflow[:,yi], s=0.5, alpha=0.1, label="skyblue", zorder=2)
-                axs[yi,xi].scatter(stan[:,xi], stan[:,yi], s=0.5, alpha=0.1, label="darkorange",zorder=1)
+                axs[yi,xi].scatter(samples_one[:,xi], samples_one[:,yi], s=0.5, alpha=0.1, label="skyblue", zorder=2)
+                axs[yi,xi].scatter(samples_two[:,xi], samples_two[:,yi], s=0.5, alpha=0.1, label="darkorange",zorder=1)
 
-    axs[0,-1].legend(handles, ["BayesFlow", "Stan"])
+    axs[0,-1].legend(handles, names)
     fig.tight_layout()
 
     return fig, axs
@@ -153,3 +153,5 @@ def plot_predictive_checks_histograms(classification, parameters, rts, choices):
 
 
     fig.tight_layout()
+
+    return fig, axs
