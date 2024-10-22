@@ -37,7 +37,7 @@ def prior_fun():
 
 param_names = {
     "constrained": [r"$\pi_1$", r"$\pi_2$", r"$\pi_3$", r"$\mu_1$", r"$\mu_2$", r"$\mu_3$"],
-    "unconstrained": [r"$\text{logit}(\pi_1)$", r"$\text{logit}\left(\frac{\pi_2 - \pi_1}{1-\pi_1}\right)$", r"$\log(\mu_1)$", r"$\log(\mu_2-\mu_1)$", r"$\log(\mu_3-\mu_2)$"]
+    "unconstrained": [r"$\text{logit}(\pi_1)$", r"$\text{logit}\left(\frac{\pi_2 - \pi_1}{1-\pi_1}\right)$", r"$\mu_1$", r"$\log(\mu_2-\mu_1)$", r"$\log(\mu_3-\mu_2)$"]
 }
 
 prior = Prior(prior_fun=prior_fun, param_names=param_names)
