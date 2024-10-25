@@ -3,6 +3,7 @@ import os, sys
 sys.path.append(os.path.abspath(os.path.join("../..")))
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+from matplotlib.ticker import MaxNLocator
 import numpy as np
 from pandas import read_csv
 from src.models.HmmEam import model
@@ -60,6 +61,64 @@ def plot_joint_parameters(samples_one, samples_two, param_names, names = ["Bayes
                 axs[yi,xi].scatter(samples_two[:,xi], samples_two[:,yi], s=0.5, alpha=0.1, label="darkorange",zorder=1)
 
     axs[0,-1].legend(handles, names)
+    fig.tight_layout()
+
+    return fig, axs
+
+def plot_marginal_samples(param_names, colors=None, **samples):
+    fig, axs = plt.subplots(ncols=4, nrows=2)
+    axs = axs.flatten()
+
+    min = np.min([np.min(s, axis=0) for s in samples.values()], axis=0)
+    max = np.max([np.max(s, axis=0) for s in samples.values()], axis=0)
+
+    bins = [np.linspace(min[i], max[i], 31) for i in range(len(param_names))]
+
+    for i, par in enumerate(param_names):
+        axs[i].xaxis.set_major_locator(MaxNLocator(nbins=4, prune='both'))
+        axs[i].yaxis.set_major_locator(MaxNLocator(nbins=5, prune='both'))
+
+        for k, s in samples.items():
+            axs[i].hist(s[:,i], bins=bins[i], alpha=0.5, density=True, label=k, color=colors[k])
+        axs[i].set_title(par)
+
+    fig.subplots_adjust(right=0.8)
+    handles = [patches.Patch(color=colors[key]) for key in samples.keys()]
+    fig.legend(handles, samples.keys(), bbox_to_anchor=(1.0, 0.5), loc='center left')
+    fig.tight_layout()
+
+    return fig, axs
+
+def plot_joint_samples(param_names, colors=None, **samples):
+    figsize = (1.2*1.5*len(param_names), 1.5*len(param_names))
+    fig, axs = plt.subplots(nrows=len(param_names), ncols=len(param_names), figsize=figsize)
+
+    min = np.min([np.min(s, axis=0) for s in samples.values()], axis=0)
+    max = np.max([np.max(s, axis=0) for s in samples.values()], axis=0)
+
+    bins = [np.linspace(min[i], max[i], 31) for i in range(len(param_names))]
+
+    for xi, x_par in enumerate(param_names):
+        axs[-1,xi].set_xlabel(x_par)
+        for yi, y_par in enumerate(param_names):
+            axs[yi,xi].xaxis.set_major_locator(MaxNLocator(nbins=4, prune='both'))
+            axs[yi,xi].yaxis.set_major_locator(MaxNLocator(nbins=4, prune='both'))
+
+            if xi == yi:
+                axs[yi,0].set_ylabel(y_par)
+                for k, s in samples.items():
+                    axs[yi,xi].hist(s[:,xi], bins=bins[xi],alpha = 0.5,density=True, color=colors[k])
+            elif xi > yi:
+                for k, s in samples.items():
+                    axs[yi,xi].scatter(s[:,xi], s[:,yi], s=0.5, alpha=0.1, color=colors[k])
+            else:
+                for z, (k, s) in enumerate(samples.items()):
+                    axs[yi,xi].scatter(s[:,xi], s[:,yi], s=0.5, alpha=0.1, color=colors[k], zorder=-z)
+
+
+    fig.subplots_adjust(right=0.8)
+    handles = [patches.Patch(color=colors[key]) for key in samples.keys()]
+    fig.legend(handles, samples.keys(), bbox_to_anchor=(1.1, 0.5))
     fig.tight_layout()
 
     return fig, axs
