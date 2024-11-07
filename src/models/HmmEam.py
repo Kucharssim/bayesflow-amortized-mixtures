@@ -48,7 +48,7 @@ def unconstrain_parameters(x, rts):
     y[...,4] = np.log(x[...,4]) # nu_1
     y[...,5] = np.log(x[...,5]) # nu_21
     y[...,6] = np.log(x[...,6] - x[...,5]) # nu_22_diff
-    y[...,7] = logit_scaled(x[...,7], lb=0.0, ub=min_rts+0.001) # tau / min(rt)
+    y[...,7] = logit_scaled(x[...,7], lb=0.0, ub=min_rts) # tau / min(rt)
 
     return y
 
@@ -63,7 +63,7 @@ def constrain_parameters(x, rts):
     y[...,4] = np.exp(x[...,4]) # nu_1
     y[...,5] = np.exp(x[...,5]) # nu_21
     y[...,6] = np.exp(x[...,6]) + y[...,5] # nu_22
-    y[...,7] = expit_scaled(x[...,7], lb=0.0, ub=min_rts+0.001)
+    y[...,7] = expit_scaled(x[...,7], lb=0.0, ub=min_rts)
     
 
     return y
