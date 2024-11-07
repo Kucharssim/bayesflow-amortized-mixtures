@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from matplotlib.ticker import MaxNLocator
 import numpy as np
+import pickle
 from pandas import read_csv
 from src.models.HmmEam import model
 
@@ -15,6 +16,35 @@ def get_data(subject):
     df = np.array(df)
 
     return df[:400, 1], np.abs(df[:400, 2]-2.0)
+
+def get_bayesflow_samples(subject):
+    path = os.path.join('dutilh-resources', 'bayesflow-fits', subject) + '.pkl'
+    with open(path, 'rb') as f:
+        posterior, (forward, backward, smoothing ) = pickle.load(f)
+        posterior = posterior[0]
+        forward = forward[0]
+        backward = backward[0]
+        smoothing = smoothing[0]
+    
+    return (posterior, (forward, backward, smoothing))
+
+def get_stan_samples(subject):
+    path = os.path.join('dutilh-resources', 'stan-fits', subject) + '.pkl'
+    with open(path, 'rb') as f:
+        stan_fit = pickle.load(f)
+
+    stan_posterior = np.array([
+        stan_fit.stan_variable('transition_matrix')[:, 0, 0],
+        stan_fit.stan_variable('transition_matrix')[:, 1, 1],
+        stan_fit.stan_variable('alpha_1'),
+        stan_fit.stan_variable('alpha_2'),
+        stan_fit.stan_variable('nu_1'),
+        stan_fit.stan_variable('nu_2')[:,0],
+        stan_fit.stan_variable('nu_2')[:,1],
+        stan_fit.stan_variable('tau'),
+        ]).transpose()
+    
+    return stan_posterior, stan_fit
 
 def plot_marginal_posteriors(stan, bayesflow, param_names):
 
@@ -214,3 +244,34 @@ def plot_predictive_checks_histograms(classification, parameters, rts, choices):
     fig.tight_layout()
 
     return fig, axs
+
+
+def compute_true_log_prob(posterior, stan_model, stan_data):
+    log_prob = []
+
+    for iter in range(posterior.shape[0]):
+        post = posterior[iter]
+
+        transition_matrix = np.array([
+            [post[0], 1-post[0]],
+            [1-post[1], post[1]]
+        ])
+
+        stan_params = {
+            "transition_matrix": transition_matrix,
+            "alpha_1": post[2],
+            "alpha_2_diff": post[3] - post[2],
+            "nu_1": post[4],
+            "nu_21": post[5],
+            "nu_22_diff": post[6] - post[5],
+            "tau": post[7]
+        }
+
+        lp = stan_model.log_prob(params = stan_params, data = stan_data, jacobian=False)
+        lp = np.array(lp)[0,0]
+
+        log_prob.append(lp)
+
+    log_prob = np.array(log_prob)
+
+    return log_prob
