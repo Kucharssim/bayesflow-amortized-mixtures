@@ -72,6 +72,11 @@ class Saccade():
 
         return cn + sdn_a + sdn_b
     
+    def velocity_peak(self, a, b):
+        t = np.log(a / b) / self.alpha
+        v = self.velocity_expectation(t, a, b)
+        return t, v
+    
     def position_expectation(self, t, a, b):
         eat = np.exp(-self.alpha * t)
 
@@ -101,7 +106,7 @@ class Saccade():
         term3 = - t * (1-eat) / (2 * self.alpha)
         den = term1 + term2 + term3
 
-        return self.target / den
+        return self.target/den
 
     def solve_b(self, t, a):
         factor = a / (self.alpha * t)
@@ -174,7 +179,7 @@ if __name__ == "__main__":
     axs[0].legend()
     plt.show()
 
-    amplitudes = [i * 25 for i in range(10)]
+    amplitudes = [20 + i * 20 for i in range(10)]
     durations = []
     peak_velocity = []
     fig, axs=plt.subplots(nrows=2, ncols=2)
@@ -182,22 +187,26 @@ if __name__ == "__main__":
     axs[0,0].set_ylabel("Duration (ms)")
     axs[1,0].set_xlabel("Amplitude")
     axs[1,0].set_ylabel("Peak velocity")
-    axs[0,1].set_xlabel("Time (ms)")
+    axs[0,1].set_xlabel("Time/Duration (ms)")
     axs[0,1].set_ylabel("Amplitude")
-    axs[1,1].set_xlabel("Time (ms)")
+    axs[1,1].set_xlabel("Time/Duration (ms)")
     axs[1,1].set_ylabel("Velocity")
     for i, amplitude in enumerate(amplitudes):
-        s = Saccade(target = amplitude, dt = 0.1, alpha = 0.1, sdn=0.1, cn=0.1)
+        s = Saccade(target = amplitude, dt = 0.1, alpha = 0.02, sdn=0.1, cn=0.1)
         t, a, b = s.plan()
-        time = np.linspace(1, t, num=101)
+        time = np.linspace(0, t, num=101)
         p = s.position_expectation(time, a, b)
         axs[0, 1].plot(time, p)
 
         v = s.velocity_expectation(time, a, b)
         axs[1, 1].plot(time, v)
+
+        t_peak, v_peak = s.velocity_peak(a, b)
+
+        axs[1, 1].scatter(t_peak, v_peak)
         
         durations.append(t)
-        peak_velocity.append(np.max(v))
+        peak_velocity.append(v_peak)
 
     axs[0,0].plot(amplitudes, durations)
     axs[1,0].plot(amplitudes, peak_velocity)
