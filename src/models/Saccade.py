@@ -192,7 +192,7 @@ if __name__ == "__main__":
     axs[1,1].set_xlabel("Time/Duration (ms)")
     axs[1,1].set_ylabel("Velocity")
     for i, amplitude in enumerate(amplitudes):
-        s = Saccade(target = amplitude, dt = 0.1, alpha = 0.02, sdn=0.1, cn=0.1)
+        s = Saccade(target = amplitude, dt = 0.1, alpha = alpha, sdn=sdn, cn=sdn)
         t, a, b = s.plan()
         time = np.linspace(0, t, num=101)
         p = s.position_expectation(time, a, b)
@@ -214,3 +214,92 @@ if __name__ == "__main__":
     fig.tight_layout()
 
     plt.show()
+
+# Define the function for a
+def compute_a(alpha, beta, t_stop, p):
+    numerator = alpha * beta * p * (-alpha * np.exp(beta * t_stop) + alpha + beta * np.exp(beta * t_stop) - beta) * np.exp(alpha * t_stop)
+    denominator = (
+        alpha * beta * t_stop * np.exp(alpha * t_stop) - alpha * beta * t_stop * np.exp(beta * t_stop) +
+        alpha * np.exp(alpha * t_stop) + alpha * np.exp(beta * t_stop) -
+        alpha * np.exp(t_stop * (alpha + beta)) - alpha -
+        beta * np.exp(alpha * t_stop) - beta * np.exp(beta * t_stop) +
+        beta * np.exp(t_stop * (alpha + beta)) + beta
+    )
+    return numerator / denominator
+
+
+# Define the function for b
+def compute_b(alpha, beta, t_stop, a):
+    """
+    Compute the value of 'b' based on the derived analytical formula.
+    """
+    numerator = a * beta * (np.exp(-alpha * t_stop) - np.exp(-beta * t_stop))
+    denominator = (beta - alpha) * (1 - np.exp(-beta * t_stop))
+    return numerator / denominator
+
+def compute_ab(alpha, beta, t, p):
+    a = compute_a(alpha, beta, t, p)
+    b = compute_b(alpha, beta, t, a)
+
+    return a, b
+
+# Example usage with numerical parameters
+alpha, beta, t_stop, p = 0.15, 0.1, 40.0, 50.0  # Example parameter values
+a_val, b_val = compute_ab(alpha, beta, t, p)
+
+a_val, b_val
+
+
+dt = 0.01    # Time step for simulation
+t_max = t_stop  # Total simulation time
+
+# Calculate a and b using the analytic expressions
+a = compute_a(alpha, beta, t_stop, p)
+b = compute_b(alpha, beta, t_stop, a)
+print(a, b)
+
+# Discrete simulation setup
+time = np.arange(0, t_max + dt, dt)
+velocity_sim = np.zeros_like(time)
+position_sim = np.zeros_like(time)
+
+# Perform the simulation
+for i in range(1, len(time)):
+    acc = a * np.exp(-alpha * time[i-1]) - b - beta * velocity_sim[i-1]
+    velocity_sim[i] = velocity_sim[i-1] + acc * dt
+    position_sim[i] = position_sim[i-1] + velocity_sim[i] * dt
+
+# Analytic expressions for velocity and position
+velocity_analytic = (a / (beta - alpha)) * (np.exp(-alpha * time) - np.exp(-beta * time)) - \
+                    (b / beta) * (1 - np.exp(-beta * time))
+position_analytic = (-a / (alpha * (beta - alpha)) * np.exp(-alpha * time) +
+                     a / (beta * (beta - alpha)) * np.exp(-beta * time) -
+                     b / beta * time -
+                     b / beta**2 * np.exp(-beta * time) +
+                     a / (alpha * (beta - alpha)) -
+                     a / (beta * (beta - alpha)) +
+                     b / beta**2)
+
+# Plot results to compare simulation and analytic solutions
+plt.figure(figsize=(10, 5))
+
+# Velocity comparison
+plt.subplot(1, 2, 1)
+plt.plot(time, velocity_sim, label="Simulated Velocity", linestyle="--")
+plt.plot(time, velocity_analytic, label="Analytic Velocity", linestyle="-")
+plt.xlabel("Time (ms)")
+plt.ylabel("Velocity")
+plt.title("Velocity: Simulation vs Analytic")
+plt.legend()
+
+# Position comparison
+plt.subplot(1, 2, 2)
+plt.plot(time, position_sim, label="Simulated Position", linestyle="--")
+plt.plot(time, position_analytic, label="Analytic Position", linestyle="-")
+plt.xlabel("Time (ms)")
+plt.ylabel("Position")
+plt.title("Position: Simulation vs Analytic")
+plt.legend()
+
+plt.tight_layout()
+plt.show()
