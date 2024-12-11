@@ -7,8 +7,7 @@ class Saccade():
     def __init__(
         self,
         target: float = 1.0,
-        alpha: float = 100,
-        beta: float = 0.1,
+        alpha: float = 0.01,
         cn: float = 0.01,
         sdn: float = 0.01,
         dt: float = 1
@@ -16,7 +15,6 @@ class Saccade():
         self.target = target
         self.distance = self.target
         self.alpha = alpha
-        self.beta = beta
         self.sdn = sdn
         self.cn = cn
         self.dt = dt
@@ -28,26 +26,26 @@ class Saccade():
         self.history = {"position": [], "velocity": [], "event": [], "time": []}
 
     def __call__(self):
-        t, a, b, c = self.plan()
+        t, a, b = self.plan()
 
-        self.run(t, a, b, c)
+        self.run(t, a, b)
 
-        return t, a, b, c
+        return t, a, b
 
-    def run(self, t, a, b, c):
+    def run(self, t, a, b):
         while self.t < t:
-            self.update(a, b, c) 
+            self.update(a, b) 
     
     def plan(self):
         t = self.optim()
-        a, b, c = self.solve_abc(t)
+        a, b = self.solve_ab(t)
 
-        return t, a, b, c
+        return t, a, b
 
-    def update(self, a, b, c):
+    def update(self, a, b):
         t = self.t + self.dt
 
-        burst = a * np.exp(-c * t)
+        burst = a * np.exp(-self.alpha * t)
 
         cn = np.random.normal(scale=self.cn)
         sdn_a = np.random.normal(scale=(self.sdn * burst))
@@ -61,77 +59,52 @@ class Saccade():
         self.t = t
 
         self.snapshot()  
-    
-    def peak_velocity_constraint(self):
-        return self.alpha * np.log(1+self.beta * self.distance)
 
-    def velocity_expectation(self, t, a, b, c):
-        return a * (1 - np.exp(-c*t)) / c - b * t
+    def velocity_expectation(self, t, a, b):
+        return a * (1 - np.exp(-self.alpha*t)) / self.alpha - b * t
     
-    def velocity_variance(self, t, a, b, c):
-        cn = self.cn**2 * t
-        sdn_a = a**2 * (1 - np.exp(-2*c*t)) / (2 * c)
-        sdn_b = (b*self.sdn)**2 * t
-
-        return cn + sdn_a + sdn_b
-    
-    def velocity_peak(self, a, b, c):
-        t = -(np.log(b) - np.log(a)) / c
-        v = self.velocity_expectation(t, a, b, c)
+    def velocity_peak(self, a, b):
+        t = -(np.log(b) - np.log(a)) / self.alpha
+        v = self.velocity_expectation(t, a, b)
 
         return t, v
     
-    def position_expectation(self, t, a, b, c):
-        return a * (np.exp(-c*t) + c*t - 1) / c**2 - b * t**2 / 2
+    def position_expectation(self, t, a, b):
+        return a * (np.exp(-self.alpha*t) + self.alpha*t - 1) / self.alpha**2 - b * t**2 / 2
     
-    def position_variance(self, t, a, b, c):
-        cn = (self.cn * t) ** 2 / 2
-        sdn_a = self.sdn ** 2 * (np.exp(-c*t) + c*t - 1) / c**2
+    def position_variance(self, t, a, b):
+        cn = (self.cn * t) ** 2
+        sdn_a = self.sdn ** 2 * (a * np.exp(-self.alpha*t) + self.alpha*t - 1) / self.alpha**2
         sdn_b = (b * self.sdn * t) ** 2
         sdn = sdn_a + sdn_b
 
         return cn + sdn, cn, sdn
 
-    def solve_a(self, t, c):
+    def solve_a(self, t):
         num = self.distance
-        expt = np.exp(-c*t)
-        den1 = (expt + c*t - 1) / c**2
-        den2 = -(t * (1-expt)) / (2*c)
+        expt = np.exp(-self.alpha*t)
+        den1 = (expt + self.alpha*t - 1) / self.alpha**2
+        den2 = -(t * (1-expt)) / (2*self.alpha)
         den = den1 + den2
-        return np.max([num/den, -1000])
+        return num/den
 
-    def solve_b(self, t, a, c):
-        num = a * (1 - np.exp(-c * t))
-        den = c * t
-        return np.max([num/den, -1000])
-
-    def solve_c(self, a, b):
-        ln = np.log(b) - np.log(a)
-        return (a - a*ln - b*ln) / self.peak_velocity_constraint()
+    def solve_b(self, t, a):
+        num = a * (1 - np.exp(-self.alpha * t))
+        den = self.alpha * t
+        return num/den
     
-    def solve_ab(self, t, c):
-        a = self.solve_a(t, c)
-        b = self.solve_b(t, a, c)
+    def solve_ab(self, t):
+        a = self.solve_a(t)
+        b = self.solve_b(t, a)
 
         return a, b
-    
-    def solve_abc(self, t):
-        c = 0.1
-
-        for i in range(50):
-            a, b = self.solve_ab(t, c)
-            c = self.solve_c(a, b)
-
-        a, b = self.solve_ab(t, c)
-        
-        return a, b, c
 
     
     def solve_position_variance(self, t):
         t=t[0]
-        a, b, c = self.solve_abc(t)
+        a, b = self.solve_ab(t)
 
-        return self.position_variance(t, a, b, c)[0]
+        return self.position_variance(t, a, b)[0]
     
     def optim(self):
         result = minimize(
@@ -150,20 +123,19 @@ class Saccade():
 
 
 if __name__ == "__main__":
-    alpha = 100
-    beta = 2
+    alpha = 0.1
     sdn=0.1
-    cn=0.01
-    amplitude = 100
-    sac = Saccade(target=amplitude, dt = 0.1, alpha=alpha, beta=beta, sdn=sdn, cn=cn)
+    cn=0.1
+    amplitude = 750
+    sac = Saccade(target=amplitude, dt = 0.1, alpha=alpha, sdn=sdn, cn=cn)
     durations = range(5, 150)
     cns = []
     sdns = []
     vars = []
     for t in durations:
-        a, b, c = sac.solve_abc(t)
-        p = sac.position_expectation(t, a, b, c)
-        cs, c, s = sac.position_variance(t, a, b, c)
+        a, b = sac.solve_ab(t)
+        p = sac.position_expectation(t, a, b)
+        cs, c, s = sac.position_variance(t, a, b)
         cns.append(c)
         sdns.append(s)
         vars.append(cs)
@@ -175,23 +147,22 @@ if __name__ == "__main__":
     plt.show()
 
     t=35
-    sac = Saccade(target=amplitude, dt = 0.1, alpha=alpha, beta=beta,  sdn=sdn, cn=cn)
-    a, b, c = sac.solve_abc(t)
-    sac.run(t, a, b, c)
+    sac = Saccade(target=amplitude, dt = 0.1, alpha=alpha, sdn=sdn, cn=cn)
+    a, b = sac.solve_ab(t)
+    sac.run(t, a, b)
     time = np.array(sac.history['time'])
 
     fig, axs=plt.subplots(nrows=2)
     axs[0].plot(time, sac.history['position'], label='sim')
-    axs[0].plot(time, sac.position_expectation(time, a, b, c), label='est')
+    axs[0].plot(time, sac.position_expectation(time, a, b), label='est')
     axs[1].plot(time, sac.history['velocity'])
-    axs[1].plot(time, sac.velocity_expectation(time, a, b, c), label='est')
+    axs[1].plot(time, sac.velocity_expectation(time, a, b), label='est')
     axs[0].legend()
     plt.show()
 
     amplitudes = [20 + i * 20 for i in range(10)]
     durations = []
     peak_velocity = []
-    pv = []
     fig, axs=plt.subplots(nrows=2, ncols=2)
     axs[0,0].set_xlabel("Amplitude")
     axs[0,0].set_ylabel("Duration (ms)")
@@ -202,17 +173,16 @@ if __name__ == "__main__":
     axs[1,1].set_xlabel("Time/Duration (ms)")
     axs[1,1].set_ylabel("Velocity")
     for i, amplitude in enumerate(amplitudes):
-        s = Saccade(target = amplitude, dt = 0.1, alpha=alpha, beta=beta, sdn=sdn, cn=sdn)
-        pv.append(s.alpha * np.log(1 + s.beta * amplitude))
-        t, a, b, c = s.plan()
+        s = Saccade(target = amplitude, dt = 0.1, alpha=alpha, sdn=sdn, cn=sdn)
+        t, a, b = s.plan()
         time = np.linspace(0, t, num=101)
-        p = s.position_expectation(time, a, b, c)
+        p = s.position_expectation(time, a, b)
         axs[0, 1].plot(time, p)
 
-        v = s.velocity_expectation(time, a, b, c)
+        v = s.velocity_expectation(time, a, b)
         axs[1, 1].plot(time, v)
 
-        t_peak, v_peak = s.velocity_peak(a, b, c)
+        t_peak, v_peak = s.velocity_peak(a, b)
 
         axs[1, 1].scatter(t_peak, v_peak)
         
@@ -221,7 +191,6 @@ if __name__ == "__main__":
 
     axs[0,0].plot(amplitudes, durations)
     axs[1,0].plot(amplitudes, peak_velocity)
-    axs[1,0].plot(amplitudes, pv)
 
     fig.tight_layout()
 
