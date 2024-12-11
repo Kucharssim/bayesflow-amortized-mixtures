@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 from scipy.optimize import minimize
 
 from bayesflow.simulation import Prior, Simulator, GenerativeModel
+from tensorflow import one_hot
+from copy import deepcopy
 
 class Updateable():
     def __init__(self, position: np.ndarray, dt=1.0):
@@ -37,7 +39,7 @@ class Fixation(Updateable):
         while accumulator < self.threshold:
             accumulator = accumulator + np.random.normal(loc=self.drift_rate) * self.dt
             self.update()
-            self.snapshot("fixation")
+            self.snapshot(0)
 
     def update(self):
         drift = self.drift * (self.target - self.position)
@@ -105,7 +107,7 @@ class Saccade(Updateable):
         self.velocity = self.velocity + acc * self.direction
         self.position = self.position + self.velocity * self.dt
 
-        self.snapshot(event="saccade")  
+        self.snapshot(event=1)  
 
     def velocity_expectation(self, t, a, b):
         return a * (1 - np.exp(-self.alpha*t)) / self.alpha - b * t
@@ -241,8 +243,15 @@ def prior_fun():
 
     return pars
 
-
 prior = Prior(prior_fun=prior_fun)
+
+def unconstrain_parameters(theta):
+    theta = np.copy(theta)
+    return np.log(theta)
+
+def constrain_parameters(theta):
+    theta = np.copy(theta)
+    return np.exp(theta)
 
 def simulator_fun(theta):
     drift, tremor, threshold, drift_rate, alpha, cn, sdn = theta
@@ -253,10 +262,46 @@ def simulator_fun(theta):
     )
 
     position, event = eye()
-    
-    return position[0:5000:2]
+
+    position = position[0:5000:2]
+    event = event[0:5000:2]
+
+    return np.column_stack((position, event))
 
 
 simulator = Simulator(simulator_fun=simulator_fun)
 
 model = GenerativeModel(prior=prior, simulator=simulator, skip_test=True)
+
+def configurator_posterior(input_dict):
+    parameters = unconstrain_parameters(input_dict["prior_draws"]).astype(np.float32)
+    position = input_dict["sim_data"][...,:2].astype(np.float32)
+
+    return {
+        "parameters": parameters,
+        "summary_conditions": position
+    }
+
+def configurator_mixture(input_dict, posterior_dict=None):
+    if posterior_dict is None:
+        output = configurator_posterior(input_dict)
+    else:
+        output = deepcopy(posterior_dict)
+
+    output["parameters"] = np.expand_dims(output["parameters"], axis=1)
+
+    latents = input_dict["sim_data"][...,-1]
+    latents = one_hot(latents, 2)
+    latents = np.expand_dims(latents, axis=1)
+
+    output["latents"] = latents
+
+    return output
+    
+
+def configurator(input_dict):
+    posterior_dict = configurator_posterior(input_dict)
+    return {
+        "posterior_inputs": posterior_dict,
+        "mixture_inputs": configurator_mixture(input_dict, posterior_dict)
+    }
