@@ -37,16 +37,16 @@ class Fixation(Updateable):
     def __call__(self):
         accumulator = 0.0
         while accumulator < self.threshold:
-            accumulator = accumulator + np.random.normal(loc=self.drift_rate) * self.dt
+            accumulator = accumulator + np.random.normal(loc=self.drift_rate) * np.sqrt(self.dt)
             self.update()
             self.snapshot(0)
 
     def update(self):
         drift = self.drift * (self.target - self.position)
-        tremor = np.random.normal(size=2)
+        tremor = np.random.normal(size=2, scale=self.tremor)
 
-        self.velocity = (drift + tremor)
-        self.position = (self.position) + self.velocity * self.dt
+        self.velocity = drift * self.dt + tremor * np.sqrt(self.dt)
+        self.position = (self.position) + self.velocity
         self.time = self.time + self.dt
 
 class Saccade(Updateable):
@@ -102,7 +102,7 @@ class Saccade(Updateable):
         sdn_a = np.random.normal(size=2, scale=(self.sdn * burst))
         sdn_b = np.random.normal(size=2, scale=(self.sdn * b))
             
-        acc = (burst - b + cn + sdn_a + sdn_b) * self.dt
+        acc = (burst - b) * self.dt  + (cn + sdn_a + sdn_b) * np.sqrt(self.dt)
 
         self.velocity = self.velocity + acc * self.direction
         self.position = self.position + self.velocity * self.dt
@@ -213,8 +213,8 @@ class Eye(Updateable):
 
 
 if __name__ == "__main__":
-    fixation_params = {"drift": 0.01, "tremor": 25.0, "threshold": 1000, "drift_rate": 3}
-    saccade_params = {"alpha": 0.1, "cn": 0.01, "sdn": 0.01}
+    fixation_params = {"drift": 0.05, "tremor": 2.5, "threshold": 50, "drift_rate": 0.15}
+    saccade_params = {"alpha": 0.1, "cn": 0.1, "sdn": 0.05}
 
 
     eye = Eye(fixation_params=fixation_params, saccade_params=saccade_params, dt=1.0)
@@ -229,8 +229,8 @@ if __name__ == "__main__":
 
 
 def prior_fun():
-    drift = np.random.gamma(shape=5, scale=0.1)
-    tremor = np.random.gamma(shape=5, scale=5)
+    drift = np.random.gamma(shape=5, scale=0.01)
+    tremor = np.random.gamma(shape=5, scale=0.5)
     threshold = np.random.gamma(shape=20, scale=2.5)
     drift_rate = np.random.gamma(shape=15, scale=0.01)
 
@@ -264,6 +264,7 @@ def simulator_fun(theta):
     position, event = eye()
 
     position = position[0:5000:2]
+    position = np.clip(position, a_min=eye.display_min, a_max=eye.display_max)
     event = event[0:5000:2]
 
     return np.column_stack((position, event))
@@ -275,11 +276,14 @@ model = GenerativeModel(prior=prior, simulator=simulator, skip_test=True)
 
 def configurator_posterior(input_dict):
     parameters = unconstrain_parameters(input_dict["prior_draws"]).astype(np.float32)
-    position = input_dict["sim_data"][...,:2].astype(np.float32)
+    position = input_dict["sim_data"][...,:2]
+    batch_size, num_timesteps, data_dim = position.shape
+    time_encoding = np.linspace(0, 1, num_timesteps)
+    time_encoding_batched = np.tile(time_encoding[np.newaxis, :, np.newaxis], (batch_size, 1, 1))
 
     return {
         "parameters": parameters,
-        "summary_conditions": position
+        "summary_conditions": np.concatenate((position, time_encoding_batched), axis=-1).astype(np.float32)
     }
 
 def configurator_mixture(input_dict, posterior_dict=None):

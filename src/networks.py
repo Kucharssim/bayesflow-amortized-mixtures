@@ -126,12 +126,13 @@ class AmortizedMixture(tf.keras.Model, AmortizedTarget):
 
 
 class AmortizedSmoothing(tf.keras.Model, AmortizedTarget):
-    def __init__(self, forward_net, backward_net, local_summary_net=None, loss=CategoricalCrossentropy(from_logits=True)):
+    def __init__(self, forward_net, backward_net, local_summary_net=None, global_summary_net=None, loss=CategoricalCrossentropy(from_logits=True)):
         super(AmortizedSmoothing, self).__init__()
 
         self.forward_net = forward_net
         self.backward_net = Backward(backward_net)
         self.local_summary_net = local_summary_net
+        self.global_summary_net = global_summary_net
         self.loss = loss
         self.shift = Shift2D()
 
@@ -158,32 +159,38 @@ class AmortizedSmoothing(tf.keras.Model, AmortizedTarget):
         return forward, backward, forward + backward
     
     def _calculate_summaries(self, input_dict):
-        output = input_dict["summary_conditions"]
+        locals = input_dict["summary_conditions"]
 
         if self.local_summary_net:
-            output = self.local_summary_net(output)
+            locals = self.local_summary_net(locals) # (batch_size, n_observations, n_units)
 
-        return output
+        if self.global_summary_net:
+            globals = self.global_summary_net(locals) # (batch_size, n_summaries)
+            globals = tf.expand_dims(globals, 1) # (batch_size, 1, n_summaries)
+        else:
+            globals = input_dict.get("parameters") # (batch_size, n_samples, n_parameters)
+
+        return locals, globals
+
     
     def _concat_conditions(self, input_dict):
-        summaries = self._calculate_summaries(input_dict) # (batch_size, n_observations, n_units)
-        parameters = input_dict.get("parameters") # (bacth_size, n_samples, n_parameters)
+        locals, globals = self._calculate_summaries(input_dict) 
         conditions = input_dict.get("direct_conditions") # (batch_size, n_conditions)
 
         output = []
 
-        summaries = tf.expand_dims(summaries, 1)
-        summaries = tf.tile(summaries, [1, tf.shape(parameters)[1], 1, 1])
-        output.append(summaries)
+        locals = tf.expand_dims(locals, 1)
+        locals = tf.tile(locals, [1, tf.shape(globals)[1], 1, 1])
+        output.append(locals)
 
-        parameters = tf.expand_dims(parameters, 2)
-        parameters = tf.tile(parameters, [1, 1, tf.shape(summaries)[2], 1])
-        output.append(parameters)
+        globals = tf.expand_dims(globals, 2)
+        globals = tf.tile(globals, [1, 1, tf.shape(locals)[2], 1])
+        output.append(globals)
 
         if conditions is not None:
             conditions = tf.expand_dims(conditions, 1)
             conditions = tf.expand_dims(conditions, 1)
-            conditions = tf.tile(conditions, [1, tf.shape(parameters)[1], tf.shape(summaries)[2], 1])
+            conditions = tf.tile(conditions, [1, tf.shape(globals)[1], tf.shape(locals)[2], 1])
             output.append(conditions)
 
         # (batch_size, n_samples, n_observations, n_units + n_parameters + n_conditions)
