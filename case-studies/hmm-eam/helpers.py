@@ -129,45 +129,49 @@ def plot_joint_samples(param_names, colors=None, **samples):
     bins = [np.linspace(min[i], max[i], 31) for i in range(len(param_names))]
 
     for xi, x_par in enumerate(param_names):
-        axs[-1,xi].set_xlabel(x_par)
+        axs[-1,xi].set_xlabel(x_par, fontsize=28)
         for yi, y_par in enumerate(param_names):
-            axs[yi,xi].xaxis.set_major_locator(MaxNLocator(nbins=4, prune='both'))
-            axs[yi,xi].yaxis.set_major_locator(MaxNLocator(nbins=4, prune='both'))
+            #axs[yi,xi].xaxis.set_major_locator(MaxNLocator(nbins=4, prune='both'))
+            #axs[yi,xi].yaxis.set_major_locator(MaxNLocator(nbins=4, prune='both'))
+            axs[yi,xi].set(yticklabels=[], xticklabels=[])
+            axs[yi,xi].tick_params(left=False, bottom=False)
+
 
             if xi == yi:
-                axs[yi,0].set_ylabel(y_par)
+                axs[yi,0].set_ylabel(y_par, fontsize=28, rotation=0, labelpad=18)
                 for k, s in samples.items():
                     axs[yi,xi].hist(s[:,xi], bins=bins[xi],alpha = 0.5,density=True, color=colors[k])
             elif xi > yi:
                 for k, s in samples.items():
                     axs[yi,xi].scatter(s[:,xi], s[:,yi], s=0.5, alpha=0.1, color=colors[k])
             else:
-                for z, (k, s) in enumerate(samples.items()):
-                    axs[yi,xi].scatter(s[:,xi], s[:,yi], s=0.5, alpha=0.1, color=colors[k], zorder=-z)
+                for k, s in samples.items():
+                    axs[yi,xi].scatter(s[:,xi], s[:,yi], s=0.5, alpha=0.1, color=colors[k])
 
 
-    fig.subplots_adjust(right=0.8)
+    fig.subplots_adjust(right=0.75)
     handles = [patches.Patch(color=colors[key]) for key in samples.keys()]
-    fig.legend(handles, samples.keys(), bbox_to_anchor=(1.1, 0.5))
+    fig.legend(handles, samples.keys(), bbox_to_anchor=(1.2, 0.5), fontsize=20)
     fig.tight_layout()
 
     return fig, axs
 
-def plot_classification(classification, suptitle, methods = ['BayesFlow', 'Stan']):
+def plot_classification(classification, suptitle, colors, methods = ['Stan', 'BayesFlow']):
     fig, axs = plt.subplots(1, 2, figsize=(10, 5))
     axs.flatten()
-    axs[0].set_title('P(Guessing)')
-    axs[1].set_title('P(Controlled)')
+    axs[0].set_title('P(Guessing)', fontsize=14)
+    axs[1].set_title('P(Controlled)', fontsize=14)
 
     x = range(classification.shape[-2])
     for i, method in enumerate(methods):
         for j, s in enumerate(['Guessing', 'Controlled']):
-            axs[j].plot(x, classification[1,i,:,j], label = method)
-            axs[j].fill_between(x, classification[0,i,:,j], classification[2,i,:,j])
+            axs[j].plot(x, classification[1,i,:,j], label = method, color=colors[method])
+            axs[j].fill_between(x, classification[0,i,:,j], classification[2,i,:,j], color=colors[method])
 
-
-    axs[1].legend(loc='upper left')
-    fig.suptitle(suptitle)
+    fig.suptitle(suptitle, fontsize=16)
+    fig.subplots_adjust(right=0.8)
+    handles = [patches.Patch(color=colors[key]) for key in methods]
+    fig.legend(handles, methods, bbox_to_anchor=(1.2, 0.5), fontsize=14)
     fig.tight_layout()
 
     return fig, axs
