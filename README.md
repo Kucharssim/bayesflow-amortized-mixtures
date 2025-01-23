@@ -1,4 +1,4 @@
-# Bayesian Amortized Mixture Models
+# Amortized Bayesian Mixture Models
 
 This repository is associated with the article preprinted at [arXiv](https://arxiv.org/abs/2501.10229)
 
