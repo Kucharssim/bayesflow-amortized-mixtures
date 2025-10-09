@@ -84,8 +84,9 @@ def plot_joint_parameters(samples_one, samples_two, param_names, names = ["Bayes
                 axs[yi,xi].hist(samples_one[:,xi], bins=bins[xi],alpha = 0.5, density=True, color="skyblue")
                 axs[yi,xi].hist(samples_two[:,xi], bins=bins[xi],alpha = 0.5, density=True, color="darkorange")
             elif xi > yi:
-                axs[yi,xi].scatter(samples_one[:,xi], samples_one[:,yi], s=0.5, alpha=0.1, label="skyblue")
-                axs[yi,xi].scatter(samples_two[:,xi], samples_two[:,yi], s=0.5, alpha=0.1, label="darkorange")
+                pass
+                # axs[yi,xi].scatter(samples_one[:,xi], samples_one[:,yi], s=0.5, alpha=0.1, label="skyblue")
+                # axs[yi,xi].scatter(samples_two[:,xi], samples_two[:,yi], s=0.5, alpha=0.1, label="darkorange")
             else:
                 axs[yi,xi].scatter(samples_one[:,xi], samples_one[:,yi], s=0.5, alpha=0.1, label="skyblue", zorder=2)
                 axs[yi,xi].scatter(samples_two[:,xi], samples_two[:,yi], s=0.5, alpha=0.1, label="darkorange",zorder=1)
@@ -142,8 +143,9 @@ def plot_joint_samples(param_names, colors=None, **samples):
                 for k, s in samples.items():
                     axs[yi,xi].hist(s[:,xi], bins=bins[xi],alpha = 0.5,density=True, color=colors[k])
             elif xi > yi:
-                for k, s in samples.items():
-                    axs[yi,xi].scatter(s[:,xi], s[:,yi], s=0.5, alpha=0.1, color=colors[k])
+                axs[yi,xi].axis('off')
+                # for k, s in samples.items():
+                #     axs[yi,xi].scatter(s[:,xi], s[:,yi], s=0.5, alpha=0.1, color=colors[k])
             else:
                 for k, s in samples.items():
                     axs[yi,xi].scatter(s[:,xi], s[:,yi], s=0.5, alpha=0.1, color=colors[k])
@@ -151,7 +153,7 @@ def plot_joint_samples(param_names, colors=None, **samples):
 
     fig.subplots_adjust(right=0.75)
     handles = [patches.Patch(color=colors[key]) for key in samples.keys()]
-    fig.legend(handles, samples.keys(), bbox_to_anchor=(1.2, 0.5), fontsize=20)
+    fig.legend(handles, samples.keys(), bbox_to_anchor=(0.9, 0.9), fontsize=20)
     fig.tight_layout()
 
     return fig, axs

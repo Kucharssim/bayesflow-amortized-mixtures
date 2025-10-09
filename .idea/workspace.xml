@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="c6cefaef-4d1f-4a2a-8ab7-fa6b39beb880" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/comparison-stan.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/comparison-stan.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-analysis.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-analysis.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-bayesflow.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-bayesflow.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-a/classification-backward-filtering.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-a/classification-backward-filtering.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-a/classification-filtering.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-a/classification-filtering.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-a/classification-smoothing.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-a/classification-smoothing.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-a/joint-posterior.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-a/joint-posterior.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-a/joint-prior-posterior-bf.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-a/joint-prior-posterior-bf.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-a/joint-prior-posterior-stan.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-a/joint-prior-posterior-stan.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-a/joint-prior-posterior.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-a/joint-prior-posterior.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-a/marginal-posterior.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-a/marginal-posterior.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-a/marginal-prior-posterior.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-a/marginal-prior-posterior.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-a/posterior-predictives-smoothing-bf.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-a/posterior-predictives-smoothing-bf.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-a/posterior-predictives-smoothing-stan.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-a/posterior-predictives-smoothing-stan.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-b/classification-backward-filtering.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-b/classification-backward-filtering.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-b/classification-filtering.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-b/classification-filtering.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-b/classification-smoothing.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-b/classification-smoothing.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-b/joint-posterior.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-b/joint-posterior.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-b/joint-prior-posterior-bf.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-b/joint-prior-posterior-bf.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-b/joint-prior-posterior-stan.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-b/joint-prior-posterior-stan.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-b/joint-prior-posterior.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-b/joint-prior-posterior.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-b/marginal-posterior.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-b/marginal-posterior.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-b/marginal-prior-posterior.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-b/marginal-prior-posterior.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-b/posterior-predictives-smoothing-bf.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-b/posterior-predictives-smoothing-bf.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-b/posterior-predictives-smoothing-stan.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-b/posterior-predictives-smoothing-stan.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-c/classification-backward-filtering.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-c/classification-backward-filtering.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-c/classification-filtering.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-c/classification-filtering.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-c/classification-smoothing.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-c/classification-smoothing.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-c/joint-posterior.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-c/joint-posterior.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-c/joint-prior-posterior-bf.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-c/joint-prior-posterior-bf.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-c/joint-prior-posterior-stan.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-c/joint-prior-posterior-stan.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-c/joint-prior-posterior.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-c/joint-prior-posterior.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-c/marginal-posterior.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-c/marginal-posterior.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-c/marginal-prior-posterior.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-c/marginal-prior-posterior.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-c/posterior-predictives-smoothing-bf.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-c/posterior-predictives-smoothing-bf.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-c/posterior-predictives-smoothing-stan.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-c/posterior-predictives-smoothing-stan.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-d/classification-backward-filtering.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-d/classification-backward-filtering.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-d/classification-filtering.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-d/classification-filtering.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-d/classification-smoothing.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-d/classification-smoothing.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-d/joint-posterior.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-d/joint-posterior.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-d/joint-prior-posterior-bf.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-d/joint-prior-posterior-bf.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-d/joint-prior-posterior-stan.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-d/joint-prior-posterior-stan.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-d/joint-prior-posterior.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-d/joint-prior-posterior.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-d/marginal-posterior.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-d/marginal-posterior.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-d/marginal-prior-posterior.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-d/marginal-prior-posterior.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-d/posterior-predictives-smoothing-bf.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-d/posterior-predictives-smoothing-bf.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-d/posterior-predictives-smoothing-stan.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-d/posterior-predictives-smoothing-stan.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-e/classification-backward-filtering.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-e/classification-backward-filtering.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-e/classification-filtering.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-e/classification-filtering.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-e/classification-smoothing.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-e/classification-smoothing.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-e/joint-posterior.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-e/joint-posterior.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-e/joint-prior-posterior-bf.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-e/joint-prior-posterior-bf.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-e/joint-prior-posterior-stan.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-e/joint-prior-posterior-stan.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-e/joint-prior-posterior.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-e/joint-prior-posterior.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-e/marginal-posterior.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-e/marginal-posterior.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-e/marginal-prior-posterior.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-e/marginal-prior-posterior.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-e/posterior-predictives-smoothing-bf.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-e/posterior-predictives-smoothing-bf.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-e/posterior-predictives-smoothing-stan.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-e/posterior-predictives-smoothing-stan.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-f/classification-backward-filtering.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-f/classification-backward-filtering.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-f/classification-filtering.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-f/classification-filtering.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-f/classification-smoothing.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-f/classification-smoothing.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-f/joint-posterior.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-f/joint-posterior.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-f/joint-prior-posterior-bf.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-f/joint-prior-posterior-bf.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-f/joint-prior-posterior-stan.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-f/joint-prior-posterior-stan.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-f/joint-prior-posterior.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-f/joint-prior-posterior.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-f/marginal-posterior.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-f/marginal-posterior.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-f/marginal-prior-posterior.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-f/marginal-prior-posterior.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-f/posterior-predictives-smoothing-bf.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-f/posterior-predictives-smoothing-bf.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-f/posterior-predictives-smoothing-stan.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-f/posterior-predictives-smoothing-stan.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-g/classification-backward-filtering.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-g/classification-backward-filtering.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-g/classification-filtering.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-g/classification-filtering.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-g/classification-smoothing.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-g/classification-smoothing.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-g/joint-posterior.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-g/joint-posterior.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-g/joint-prior-posterior-bf.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-g/joint-prior-posterior-bf.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-g/joint-prior-posterior-stan.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-g/joint-prior-posterior-stan.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-g/joint-prior-posterior.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-g/joint-prior-posterior.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-g/marginal-posterior.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-g/marginal-posterior.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-g/marginal-prior-posterior.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-g/marginal-prior-posterior.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-g/posterior-predictives-smoothing-bf.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-g/posterior-predictives-smoothing-bf.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-g/posterior-predictives-smoothing-stan.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-g/posterior-predictives-smoothing-stan.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-h/classification-backward-filtering.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-h/classification-backward-filtering.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-h/classification-filtering.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-h/classification-filtering.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-h/classification-smoothing.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-h/classification-smoothing.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-h/joint-posterior.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-h/joint-posterior.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-h/joint-prior-posterior-bf.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-h/joint-prior-posterior-bf.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-h/joint-prior-posterior-stan.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-h/joint-prior-posterior-stan.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-h/joint-prior-posterior.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-h/joint-prior-posterior.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-h/marginal-posterior.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-h/marginal-posterior.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-h/marginal-prior-posterior.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-h/marginal-prior-posterior.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-h/posterior-predictives-smoothing-bf.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-h/posterior-predictives-smoothing-bf.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-h/posterior-predictives-smoothing-stan.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-h/posterior-predictives-smoothing-stan.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-i/classification-backward-filtering.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-i/classification-backward-filtering.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-i/classification-filtering.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-i/classification-filtering.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-i/classification-smoothing.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-i/classification-smoothing.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-i/joint-posterior.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-i/joint-posterior.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-i/joint-prior-posterior-bf.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-i/joint-prior-posterior-bf.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-i/joint-prior-posterior-stan.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-i/joint-prior-posterior-stan.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-i/joint-prior-posterior.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-i/joint-prior-posterior.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-i/marginal-posterior.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-i/marginal-posterior.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-i/marginal-prior-posterior.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-i/marginal-prior-posterior.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-i/posterior-predictives-smoothing-bf.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-i/posterior-predictives-smoothing-bf.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-i/posterior-predictives-smoothing-stan.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-i/posterior-predictives-smoothing-stan.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-j/classification-backward-filtering.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-j/classification-backward-filtering.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-j/classification-filtering.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-j/classification-filtering.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-j/classification-smoothing.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-j/classification-smoothing.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-j/joint-posterior.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-j/joint-posterior.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-j/joint-prior-posterior-bf.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-j/joint-prior-posterior-bf.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-j/joint-prior-posterior-stan.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-j/joint-prior-posterior-stan.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-j/joint-prior-posterior.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-j/joint-prior-posterior.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-j/marginal-posterior.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-j/marginal-posterior.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-j/marginal-prior-posterior.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-j/marginal-prior-posterior.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-j/posterior-predictives-smoothing-bf.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-j/posterior-predictives-smoothing-bf.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-j/posterior-predictives-smoothing-stan.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-j/posterior-predictives-smoothing-stan.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-k/classification-backward-filtering.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-k/classification-backward-filtering.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-k/classification-filtering.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-k/classification-filtering.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-k/classification-smoothing.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-k/classification-smoothing.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-k/joint-posterior.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-k/joint-posterior.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-k/joint-prior-posterior-bf.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-k/joint-prior-posterior-bf.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-k/joint-prior-posterior-stan.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-k/joint-prior-posterior-stan.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-k/joint-prior-posterior.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-k/joint-prior-posterior.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-k/marginal-posterior.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-k/marginal-posterior.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-k/marginal-prior-posterior.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-k/marginal-prior-posterior.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-k/posterior-predictives-smoothing-bf.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-k/posterior-predictives-smoothing-bf.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-k/posterior-predictives-smoothing-stan.png" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-results/subject-k/posterior-predictives-smoothing-stan.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-stan.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/dutilh-stan.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-eam/helpers.py" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-eam/helpers.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-normal/calibration.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-normal/calibration.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/hmm-normal/comparison-stan.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/hmm-normal/comparison-stan.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/mixture-normal/calibration.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/mixture-normal/calibration.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/case-studies/mixture-normal/comparison-stan.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/case-studies/mixture-normal/comparison-stan.ipynb" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 7
+}</component>
+  <component name="ProjectId" id="31e379zFO7oKQGjvPnQUCkMwAAa" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="1" id="Add" />
+  </component>
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "main",
+    "last_opened_file_path": "/Users/simonkucharsky/projects/bayesflow/amortized-mixture/case-studies/hmm-eam",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "configurable.group.Jupyter Settings",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/case-studies/hmm-eam" />
+    </key>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-python-sdk-b3ae9b5d7125-f0eec537fc84-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-252.23892.439" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="c6cefaef-4d1f-4a2a-8ab7-fa6b39beb880" name="Changes" comment="" />
+      <created>1755870540601</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1755870540601</updated>
+      <workItem from="1755870541624" duration="5991000" />
+      <workItem from="1756303492545" duration="19532000" />
+      <workItem from="1756712410888" duration="57000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+</project>
