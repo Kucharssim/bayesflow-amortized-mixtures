@@ -55,8 +55,8 @@ def plot_marginal_posteriors(stan, bayesflow, param_names):
         np.linspace(np.min(bayesflow[:,i]), np.max(bayesflow[:,i]), 31) for i in range(len(param_names))
     ]
     for i, par in enumerate(param_names):
-        axs[i].hist(bayesflow[:,i], bins = bins[i], alpha=0.5, density=True, label = "BayesFlow")
-        axs[i].hist(stan[:,i], bins = bins[i], alpha=0.5, density=True, label = "Stan")
+        axs[i].hist(bayesflow[:,i], bins = bins[i], alpha=0.5, density=True, label = "ABI")
+        axs[i].hist(stan[:,i], bins = bins[i], alpha=0.5, density=True, label = "MCMC")
         axs[i].set_title(par)
 
     axs[0].legend()
@@ -64,7 +64,7 @@ def plot_marginal_posteriors(stan, bayesflow, param_names):
 
     return fig, axs
 
-def plot_joint_parameters(samples_one, samples_two, param_names, names = ["BayesFlow", "Stan"]):
+def plot_joint_parameters(samples_one, samples_two, param_names, names = ["ABI", "MCMC"]):
     figsize = (1.5*len(param_names), 1.5*len(param_names))
     fig, axs = plt.subplots(nrows=len(param_names), ncols=len(param_names), figsize=figsize)
 
@@ -158,7 +158,7 @@ def plot_joint_samples(param_names, colors=None, **samples):
 
     return fig, axs
 
-def plot_classification(classification, suptitle, colors, methods = ['Stan', 'BayesFlow']):
+def plot_classification(classification, suptitle, colors, methods = ['MCMC', 'ABI']):
     fig, axs = plt.subplots(1, 2, figsize=(10, 5))
     axs.flatten()
     axs[0].set_title('P(Guessing)', fontsize=14)
